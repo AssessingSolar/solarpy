@@ -5,6 +5,9 @@ try:  # pragma: no cover
 except PackageNotFoundError:  # pragma: no cover
     __version__ = "0+unknown"
 
-
-# Import of functions that should be accessible from the package top-level
-# from .layout import generate_field_layout  # noqa: F401
+# Make the modules directly available to the package
+from solarpy import (  # noqa: F401
+    plotting,
+    quality,
+    example,
+)
