@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.abspath('../../src'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'sunlib'
+project = 'solarpy'
 copyright = '2025 Adam R. Jensen'
 author = 'Adam R. Jensen'
 
@@ -46,12 +46,12 @@ exclude_patterns = []
 
 # The theme to use for HTML and HTML Help pages.
 html_theme = 'sphinx_book_theme'
-html_title = 'sunlib'
-# html_logo = "_static/sunlib_logo.svg"
-# html_favicon = "_static/sunlib_logo.svg"
+html_title = 'solarpy'
+# html_logo = "_static/solarpy_logo.svg"
+# html_favicon = "_static/solarpy_logo.svg"
 
 html_theme_options = {
-    "repository_url": "https://github.com/assessingsolar/sunlib",
+    "repository_url": "https://github.com/assessingsolar/solarpy",
     "use_issues_button": True,
     "use_repository_button": True,
 }

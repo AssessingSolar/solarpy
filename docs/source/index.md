@@ -1,6 +1,6 @@
-# sunlib
+# solarpy
 
-`sunlib` is a Python package for working with solar resource data, including quality assessment, plotting, and more.
+`solarpy` is a Python package for working with solar resource data, including quality assessment, plotting, and more.
 
 
 ## Contributing

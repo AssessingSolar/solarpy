@@ -1,4 +1,4 @@
-.. currentmodule:: sunlib
+.. currentmodule:: solarpy
 
 
 Code documentation
