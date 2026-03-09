@@ -1,5 +1,5 @@
-import pytest
+import solarpy
 
 
-def test_example():
-    assert 1 == 1
+def test_example_multiplication():
+    assert solarpy.example.multiplication(2, 4) == 8

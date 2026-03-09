@@ -14,24 +14,23 @@ include-package-data = false  # necessary for exclude to work
 where = ["src"]
 
 [project]
-name = "sunlib"
+name = "solarpy"
 authors = [
     {name = "Adam R. Jensen"},
-
 ]
-description = "A short description. To do. XXX."
+description = "A Python package for modeling solar radiation and analyzing solar resource data."
 readme = "README.md"
-requires-python = ">=3.9"
-keywords = ["solar energy", "photovoltaics", "solar collector", "shading"]
+requires-python = ">=3.10"
+keywords = ["solar energy", "solar irradiance", "solar radiation"]
 license = "BSD-3-Clause"
 license-files = ["LICEN[CS]E*"]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering",
     "Intended Audience :: Science/Research",
@@ -39,27 +38,28 @@ classifiers = [
 dependencies = [
     "numpy",
     "matplotlib",
-    "shapely",
     "pandas",
+    "pvlib",
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
 test = ["pytest>=7", "pytest-cov", "packaging"]
 doc = [
-    "sphinx==8.1.1",
-    "myst-nb==1.1.2",
-    "sphinx-book-theme==1.1.3",
-    "pvlib==0.11.1",
-    "pandas==2.2.3",
+    "sphinx==9.1.0",
+    "myst-nb==1.3.0",
+    "sphinx-book-theme==1.1.4",
+    "pvlib==0.14.0",
+    "pandas==2.3.3",
 ]
+all = ["solarpy[test,doc]"]
 
 [project.urls]
-# Documentation = "https://sunlib.readthedocs.io"
-Issues = "https://github.com/assessingsolar/sunlib/issues"
-Repository = "https://github.com/assessingsolar/sunlib.git"
-Changelog = "https://github.com/assessingsolar/sunlib/blob/main/docs/source/whatsnew.md"
+# Documentation = "https://solarpy.readthedocs.io"
+Issues = "https://github.com/assessingsolar/solarpy/issues"
+Repository = "https://github.com/assessingsolar/solarpy.git"
+Changelog = "https://github.com/assessingsolar/solarpy/blob/main/docs/source/whatsnew.md"
 
 [tool.pytest.ini_options]
-addopts = "--cov=sunlib --cov-fail-under=100 --cov-report=term-missing"
+addopts = "--cov=solarpy --cov-fail-under=100 --cov-report=term-missing"
 pythonpath = ["src"]
