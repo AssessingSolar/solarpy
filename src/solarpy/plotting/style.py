@@ -44,7 +44,7 @@ def two_part_colormap(start_color='lightgrey', colormap='viridis', n_gradient=64
 
     Examples
     --------
-    Use as a drop-in colormap for a density scatter plot:
+    Use as a drop-in colormap for a density hexbin plot:
 
     >>> from matplotlib.colors import TwoSlopeNorm
     >>> x = np.random.randn(100_000)

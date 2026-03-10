@@ -7,5 +7,6 @@ Code documentation
 .. autosummary::
    :toctree: generated/
 
-   plotting.plot_heat_map_elevation_vs_azimuth
-   # generate_field_layout
+   plotting.two_part_colormap
+   plotting.plot_google_maps
+   plotting.plot_intraday_heatmap

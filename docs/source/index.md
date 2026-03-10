@@ -8,7 +8,7 @@ Contributions to the repository, e.g., bug fixes, feature request are more than 
 
 
 ## License
-[BSD 3-clause](https://github.com/pvlib/twoaxistracking/blob/main/LICENSE).
+[BSD 3-clause](https://github.com/assessingsolar/solarpy/blob/main/LICENSE).
 
 
 ```{toctree}

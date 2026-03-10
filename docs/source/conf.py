@@ -59,7 +59,7 @@ html_theme_options = {
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = ['_static']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -74,6 +74,7 @@ intersphinx_mapping = {
     'matplotlib': ('https://matplotlib.org/stable', None),
     'shapely': ('https://shapely.readthedocs.io/en/stable/', None),
     'pvlib': ('https://pvlib-python.readthedocs.io/en/stable/', None),
+    'solposx': ('https://solposx.readthedocs.io/en/stable/', None),
 }
 
 # Number of seconds for a cell to execute before timeout (default=30)
