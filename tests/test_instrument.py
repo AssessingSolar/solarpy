@@ -17,5 +17,3 @@ def test_shadowband_correction_series():
     pd.testing.assert_series_equal(
         solarpy.instrument.shadowband_correction_factor(index, latitude=55.29007),
         pd.Series(1.0668908588370676, index=index))
-
-   
