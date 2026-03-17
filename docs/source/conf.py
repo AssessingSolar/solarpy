@@ -31,7 +31,12 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',  # parsing of Numpy docstrings
+    'sphinx_copybutton',  # add copy button to code examples
 ]
+
+# Configure copybutton to strip >>> when copying code
+copybutton_prompt_text = r">>> |\.\.\. "
+copybutton_prompt_is_regexp = True
 
 # Add any paths that contain templates here, relative to this directory.
 # templates_path = ['_templates']
