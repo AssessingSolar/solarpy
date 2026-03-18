@@ -83,18 +83,20 @@ def plot_intraday_heatmap(
     Minute-resolution data over two weeks:
 
     >>> import numpy as np
+    >>> import solarpy
     >>> mins = np.arange(14 * 1440)
     >>> time = np.datetime64("2024-01-01") + mins * np.timedelta64(1, "m")
     >>> values = np.sin(mins / 1440 * np.pi) + np.random.randn(len(mins)) * 0.1
-    >>> fig, ax = plot_intraday_heatmap(time, values, cmap="viridis")
-    >>> fig.savefig("heatmap.png", dpi=150, bbox_inches="tight")
+    >>> fig, ax = solarpy.plotting.plot_intraday_heatmap(
+    ...     time, values, cmap="viridis")
 
     Ten-minute bins over one year:
 
     >>> mins = np.arange(365 * 144) * 10
     >>> time = np.datetime64("2024-01-01") + mins * np.timedelta64(1, "m")
     >>> values = np.random.randn(len(mins))
-    >>> fig, ax = plot_intraday_heatmap(time, values, resolution=10)
+    >>> fig, ax = solarpy.plotting.plot_intraday_heatmap(
+    ...     time, values, resolution=10)
     """
     time = np.asarray(time, dtype="datetime64[ns]")
     values = np.asarray(values, dtype=float)
