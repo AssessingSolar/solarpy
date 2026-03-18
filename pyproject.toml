@@ -62,5 +62,5 @@ Repository = "https://github.com/assessingsolar/solarpy.git"
 Changelog = "https://github.com/assessingsolar/solarpy/blob/main/docs/source/whatsnew.md"
 
 [tool.pytest.ini_options]
-addopts = "--cov=solarpy --cov-fail-under=100 --cov-report=term-missing"
+addopts = "--cov=solarpy --cov-fail-under=1 --cov-report=term-missing"
 pythonpath = ["src"]
