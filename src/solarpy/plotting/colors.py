@@ -56,7 +56,7 @@ def two_part_colormap(start_color='lightgrey', colormap='viridis', n_gradient=64
     >>> cm = solarpy.plotting.two_part_colormap(
     ...     start_color='whitesmoke', colormap='plasma', colormap_start=0.05)
     >>> norm = TwoSlopeNorm(vmin=1, vcenter=30, vmax=175)
-    >>> plt.hexbin(x, y, gridsize=100, cmap=cm, norm=norm, mincnt=1)
+    >>> _ = plt.hexbin(x, y, gridsize=100, cmap=cm, norm=norm, mincnt=1)
     """
     colors_viridis = plt.colormaps[colormap](np.linspace(colormap_start, 1, n_colormap))
 
