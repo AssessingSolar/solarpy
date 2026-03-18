@@ -79,7 +79,7 @@ IRRADIANCE_COLOR_BANDS = [
 ]
 
 
-def solar_cmap_and_norm(
+def solar_colormap_and_norm(
     colormap: str | mcolors.Colormap = 'viridis',
     colormap_start: float = 0.1,
     colormap_end: float = 1,
