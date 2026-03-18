@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
@@ -14,7 +14,8 @@ def plot_intraday_heatmap(
     values: Any,
     resolution: int = 1,
     cmap: str = "viridis",
-    norm=None,
+    norm = None,
+    plot_colorbar = True,
     colorbar_label: str = "",
     ax: plt.Axes = None,
     pcolormesh_kwargs: dict | None = None,
@@ -45,6 +46,8 @@ def plot_intraday_heatmap(
         Accepts any ``matplotlib.colors`` norm, e.g. ``Normalize``,
         ``LogNorm``, ``TwoSlopeNorm``, ``BoundaryNorm``. If ``None``
         (default), linear normalization over the data range is used.
+    plot_colorbar : bool, optional
+        Whether to plot a colorbar. Default is ``True``.
     colorbar_label : str, optional
         Label displayed alongside the colorbar. Default is ``""``.
     pcolormesh_kwargs : dict, optional
@@ -75,25 +78,26 @@ def plot_intraday_heatmap(
     Missing bin/date combinations are shown as white cells.
 
     The y-axis runs from midnight (00:00) at the bottom to 23:59 at the
-    top. X-axis tick density adapts to the date range: daily labels for
-    short ranges, weekly or monthly for longer ones.
+    top (for 1-minute resolution). X-axis tick density adapts to the date
+    range: daily labels for short ranges, weekly or monthly for longer ones.
 
     Examples
     --------
     Minute-resolution data over two weeks:
 
-    >>> import numpy as np
     >>> import solarpy
+    >>> import numpy as np
+    >>> import pandas as pd
     >>> mins = np.arange(14 * 1440)
-    >>> time = np.datetime64("2024-01-01") + mins * np.timedelta64(1, "m")
-    >>> values = np.sin(mins / 1440 * np.pi) + np.random.randn(len(mins)) * 0.1
+    >>> time = pd.Timestamp("2024-01-01") + pd.to_timedelta(mins, unit='min')
+    >>> values = np.sin(mins / 1440 * np.pi) + 0.1 * np.random.randn(len(mins))
     >>> fig, ax = solarpy.plotting.plot_intraday_heatmap(
     ...     time, values, cmap="viridis")
 
     Ten-minute bins over one year:
 
     >>> mins = np.arange(365 * 144) * 10
-    >>> time = np.datetime64("2024-01-01") + mins * np.timedelta64(1, "m")
+    >>> time = pd.Timestamp("2024-01-01") + pd.to_timedelta(mins, unit='min')
     >>> values = np.random.randn(len(mins))
     >>> fig, ax = solarpy.plotting.plot_intraday_heatmap(
     ...     time, values, resolution=10)
@@ -114,7 +118,7 @@ def plot_intraday_heatmap(
     n_bins = 1440 // resolution
 
     # ------------------------------------------------------------------ #
-    # Extract date and bin index                                           #
+    # Extract date and bin index                                         #
     # ------------------------------------------------------------------ #
     dates = time.astype("datetime64[D]")
     minutes = (time - dates).astype("timedelta64[m]").astype(int)
@@ -126,7 +130,7 @@ def plot_intraday_heatmap(
     n_dates = len(all_dates)
 
     # ------------------------------------------------------------------ #
-    # Build n_bins × n_dates matrix, averaging duplicate timestamps       #
+    # Build n_bins × n_dates matrix, averaging duplicate timestamps      #
     # ------------------------------------------------------------------ #
     date_idx = np.searchsorted(all_dates, dates)
 
@@ -138,14 +142,14 @@ def plot_intraday_heatmap(
     matrix = np.where(count > 0, total / count, np.nan)
 
     # ------------------------------------------------------------------ #
-    # Figure / axes                                                        #
+    # Figure / axes                                                      #
     # ------------------------------------------------------------------ #
     if ax is None:
         fig, ax = plt.subplots(figsize=(min(max(4, n_dates * 0.5), 8), 2))
     fig = ax.figure
 
     # ------------------------------------------------------------------ #
-    # pcolormesh expects cell edges: (n+1,) arrays                        #
+    # pcolormesh expects cell edges: (n+1,) arrays                       #
     # ------------------------------------------------------------------ #
     mesh = ax.pcolormesh(
         np.arange(n_dates + 1),
@@ -158,23 +162,24 @@ def plot_intraday_heatmap(
     )
 
     # ------------------------------------------------------------------ #
-    # Colorbar                                                             #
+    # Colorbar                                                           #
     # ------------------------------------------------------------------ #
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes("right", size="2%", pad=0.05)
-    cbar = fig.colorbar(mesh, cax=cax)
-    cbar.set_label(colorbar_label)
+    if plot_colorbar:
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="2%", pad=0.05)
+        cbar = fig.colorbar(mesh, cax=cax)
+        cbar.set_label(colorbar_label)
 
     # ------------------------------------------------------------------ #
     # X-axis — dynamic tick density based on date range                  #
     # ------------------------------------------------------------------ #
-    if n_dates <= 30:           # daily
+    if n_dates <= 30:  # daily
         tick_step = 1
         date_fmt = "%Y-%m-%d"
-    elif n_dates <= 180:        # weekly
+    elif n_dates <= 180:  # weekly
         tick_step = 7
         date_fmt = "%Y-%m-%d"
-    else:                       # monthly (approx)
+    else:  # monthly (approx)
         tick_step = 30
         date_fmt = "%b %Y"
 
@@ -199,5 +204,4 @@ def plot_intraday_heatmap(
     )
     ax.set_ylabel("Time of day")
 
-    fig.tight_layout()
     return fig, ax
