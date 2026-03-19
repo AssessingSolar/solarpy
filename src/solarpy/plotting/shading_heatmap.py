@@ -114,7 +114,6 @@ def plot_shading_heatmap(
     solar_azimuth = solar_azimuth[above_and_finite]
     solar_elevation = solar_elevation[above_and_finite]
 
-
     # Southern hemisphere: sun transits north, azimuth wraps around 0°/360°
     if northern_hemisphere:
         az_min = 0
@@ -123,7 +122,6 @@ def plot_shading_heatmap(
         az_min = -180
         az_max = 180 - elevation_bin_size
         solar_azimuth = np.where(solar_azimuth > 180, solar_azimuth - 360, solar_azimuth)
-
 
     # Build bin edges
     el_min = 0
