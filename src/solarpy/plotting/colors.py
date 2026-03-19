@@ -81,7 +81,7 @@ IRRADIANCE_COLOR_BANDS = [
 ]
 
 
-def solar_colormap_and_norm(
+def irradiance_colormap_and_norm(
     colormap: str | mcolors.Colormap = 'viridis',
     colormap_start: float = 0.1,
     colormap_end: float = 1,
@@ -144,7 +144,7 @@ def solar_colormap_and_norm(
     >>> daily_cycle = np.sin(np.linspace(0, np.pi, 1440))
     >>> values = np.tile(daily_cycle, 365) * 900 + np.random.randn(365 * 1440) * 5
     >>> values -= 3  # introduce a small thermal offset
-    >>> cmap, norm = solarpy.plotting.solar_colormap_and_norm(vmax=1000)
+    >>> cmap, norm = solarpy.plotting.irradiance_colormap_and_norm(vmax=1000)
     >>> fig, ax = solarpy.plotting.plot_intraday_heatmap(
     ...     time=time,
     ...     values=values,
