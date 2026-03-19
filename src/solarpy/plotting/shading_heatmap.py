@@ -170,11 +170,10 @@ def plot_shading_heatmap(
         ax.set_xticklabels([_az_compass[x] for x in az_ticks])
         ax.set_xlim(0, 360)
     else:
-        az_ticks = np.arange(-180, 180 +1, 90)
+        az_ticks = np.arange(-180, 180 + 1, 90)
         ax.set_xticks(az_ticks)
         ax.set_xticklabels(_az_compass.get(int(x % 360)) for x in az_ticks)
         ax.set_xlim(-180, 180)
-
     ax.set_xlabel("Solar azimuth [°]")
 
     el_tick_step = 5 if (el_max - el_min) <= 45 else 10
