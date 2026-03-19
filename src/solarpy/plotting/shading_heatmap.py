@@ -21,7 +21,7 @@ def plot_shading_heatmap(
     norm=None,
     colorbar: bool = False,
     colorbar_label: str | None = None,
-    ax: plt.Axes = None,
+    ax: plt.Axes | None = None,
     pcolormesh_kwargs: dict | None = None,
 ) -> tuple[plt.Figure, plt.Axes]:
     """Plot a heatmap of solar irradiance in azimuth–elevation space.
@@ -108,9 +108,7 @@ def plot_shading_heatmap(
     solar_azimuth = solar_azimuth[above]
     solar_elevation = solar_elevation[above]
 
-    # ------------------------------------------------------------------ #
-    # Build bin edges                                                    #
-    # ------------------------------------------------------------------ #
+    # Build bin edges
     az_min = np.floor(solar_azimuth.min() / azimuth_bin_size) * azimuth_bin_size
     az_max = np.ceil(solar_azimuth.max() / azimuth_bin_size) * azimuth_bin_size
     el_min = np.floor(solar_elevation.min() / elevation_bin_size) * elevation_bin_size
@@ -119,9 +117,7 @@ def plot_shading_heatmap(
     az_edges = np.arange(az_min, az_max + azimuth_bin_size, azimuth_bin_size)
     el_edges = np.arange(el_min, el_max + elevation_bin_size, elevation_bin_size)
 
-    # ------------------------------------------------------------------ #
-    # Accumulate per-bin encoding (n_el rows × n_az cols)                #
-    # ------------------------------------------------------------------ #
+    # Accumulate per-bin encoding (n_el rows × n_az cols)
     matrix, _, _, _ = binned_statistic_2d(
         solar_azimuth, solar_elevation, value,
         statistic=encoding,
@@ -129,17 +125,13 @@ def plot_shading_heatmap(
     )
     matrix = matrix.T  # rows=elevation, cols=azimuth
 
-    # ------------------------------------------------------------------ #
-    # Figure / axes                                                      #
-    # ------------------------------------------------------------------ #
+    # Figure / axes
     if ax is None:
         fig, ax = plt.subplots()
     else:
         fig = ax.figure
 
-    # ------------------------------------------------------------------ #
-    # pcolormesh                                                         #
-    # ------------------------------------------------------------------ #
+    # pcolormesh
     mesh = ax.pcolormesh(
         az_edges,
         el_edges,
@@ -150,18 +142,14 @@ def plot_shading_heatmap(
         **(pcolormesh_kwargs or {}),
     )
 
-    # ------------------------------------------------------------------ #
-    # Colorbar                                                           #
-    # ------------------------------------------------------------------ #
+    # Colorbar
     if colorbar:
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="2%", pad=0.05)
         cbar = fig.colorbar(mesh, cax=cax)
         cbar.set_label(colorbar_label)
 
-    # ------------------------------------------------------------------ #
-    # Axes labels and ticks                                              #
-    # ------------------------------------------------------------------ #
+    # Axes labels and ticks
     ax.set_xticks(np.arange(0, 360 + 1, 90))
     ax.set_xlim(0, 360)
     ax.set_xlabel("Solar azimuth [°]")
