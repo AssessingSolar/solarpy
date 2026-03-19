@@ -12,3 +12,4 @@ Code documentation
    plotting.plot_google_maps
    plotting.plot_intraday_heatmap
    plotting.plot_shading_heatmap
+   horizon.get_horizon_mines

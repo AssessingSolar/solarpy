@@ -9,5 +9,6 @@ except PackageNotFoundError:  # pragma: no cover
 from solarpy import (  # noqa: F401
     plotting,
     quality,
+    horizon,
     example,
 )
