@@ -19,7 +19,8 @@ def plot_shading_heatmap(
     encoding: Callable[[np.ndarray], float] | str = "max",
     cmap: str = "viridis",
     norm=None,
-    colorbar: bool = False,
+    northern_hemisphere: bool = True,
+    colorbar: bool = True,
     colorbar_label: str | None = None,
     ax: plt.Axes | None = None,
     pcolormesh_kwargs: dict | None = None,
@@ -48,6 +49,11 @@ def plot_shading_heatmap(
         Width of each azimuth bin in degrees. Default is ``1.0``.
     elevation_bin_size : float, optional
         Height of each elevation bin in degrees. Default is ``1.0``.
+    northern_hemisphere : bool, optional
+        Set to ``False`` for southern hemisphere sites. The sun transits
+        north there, so the solar azimuth path crosses 0°/360°. When
+        ``False``, azimuths are shifted to centre the plot around north,
+        keeping the sun path continuous. Default is ``True``.
     encoding : callable or str, optional
         Reduction function applied to the values in each bin. Accepts any
         string supported by ``scipy.stats.binned_statistic_2d`` (``'max'``,
@@ -61,7 +67,7 @@ def plot_shading_heatmap(
         If ``None`` (default), linear normalization over the data range
         is used.
     colorbar : bool, optional
-        Whether to plot a colorbar. Default is ``False``.
+        Whether to plot a colorbar. Default is ``True``.
     colorbar_label : str, optional
         Label displayed alongside the colorbar.
     ax : matplotlib.axes.Axes, optional
@@ -102,23 +108,32 @@ def plot_shading_heatmap(
     solar_azimuth = np.asarray(solar_azimuth, dtype=float)
     solar_elevation = np.asarray(solar_elevation, dtype=float)
 
-    # Discard sub-horizon data
-    above = solar_elevation >= 0
-    value = value[above]
-    solar_azimuth = solar_azimuth[above]
-    solar_elevation = solar_elevation[above]
+    # Discard sub-horizon data and non-finite values (nan and inf)
+    above_and_finite = (solar_elevation >= 0) & np.isfinite(value)
+    value = value[above_and_finite]
+    solar_azimuth = solar_azimuth[above_and_finite]
+    solar_elevation = solar_elevation[above_and_finite]
+
+
+    # Southern hemisphere: sun transits north, azimuth wraps around 0°/360°
+    if northern_hemisphere:
+        az_min = 0
+        az_max = 360 - elevation_bin_size
+    else:
+        az_min = -180
+        az_max = 180 - elevation_bin_size
+        solar_azimuth = np.where(solar_azimuth > 180, solar_azimuth - 360, solar_azimuth)
+
 
     # Build bin edges
-    az_min = np.floor(solar_azimuth.min() / azimuth_bin_size) * azimuth_bin_size
-    az_max = np.ceil(solar_azimuth.max() / azimuth_bin_size) * azimuth_bin_size
-    el_min = np.floor(solar_elevation.min() / elevation_bin_size) * elevation_bin_size
+    el_min = 0
     el_max = np.ceil(solar_elevation.max() / elevation_bin_size) * elevation_bin_size
 
     az_edges = np.arange(az_min, az_max + azimuth_bin_size, azimuth_bin_size)
     el_edges = np.arange(el_min, el_max + elevation_bin_size, elevation_bin_size)
 
     # Accumulate per-bin encoding (n_el rows × n_az cols)
-    matrix, _, _, _ = binned_statistic_2d(
+    matrix, _x_edges, _y_edges, _binnumber = binned_statistic_2d(
         solar_azimuth, solar_elevation, value,
         statistic=encoding,
         bins=[az_edges, el_edges],
@@ -150,8 +165,16 @@ def plot_shading_heatmap(
         cbar.set_label(colorbar_label)
 
     # Axes labels and ticks
-    ax.set_xticks(np.arange(0, 360 + 1, 90))
-    ax.set_xlim(0, 360)
+    _az_compass = {0: "N", 90: "E", 180: "S", 270: "W", 360: "N"}
+    if not northern_hemisphere:
+        az_ticks = np.arange(np.floor(az_min / 90) * 90, az_max + 1, 90)
+        ax.set_xticks(az_ticks)
+        ax.set_xticklabels(_az_compass.get(int(x % 360)) for x in az_ticks)
+        ax.set_xlim(-180, 180)
+    else:
+        ax.set_xticks(np.arange(0, 360 + 1, 90))
+        ax.set_xticklabels([_az_compass[v] for v in range(0, 360 + 1, 90)])
+        ax.set_xlim(0, 360)
     ax.set_xlabel("Solar azimuth [°]")
 
     el_tick_step = 5 if (el_max - el_min) <= 45 else 10
