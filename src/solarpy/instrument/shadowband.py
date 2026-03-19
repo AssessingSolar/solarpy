@@ -13,6 +13,7 @@ https://www.kippzonen.com/Download/46/CM121-B-C-Shadow-Ring-Manual
 import numpy as np
 import pvlib as pv
 import pandas as pd
+import datetime
 
 
 def shadowband_correction_factor(
@@ -122,6 +123,6 @@ def shadowband_correction_factor(
     # ------------------------------------------------------------------
     # 7. Return a plain float for scalar input, Series for array input.
     # ------------------------------------------------------------------
-    if np.isscalar(input_date) or isinstance(input_date, pd.Timestamp):
+    if np.isscalar(input_date) or isinstance(input_date, (pd.Timestamp, datetime.date, datetime.datetime)):
         return float(C)
     return pd.Series(C, index=dates)
