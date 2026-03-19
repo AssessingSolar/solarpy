@@ -7,6 +7,7 @@ from typing import Any, Callable
 import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from scipy.stats import binned_statistic_2d
 
 
 def plot_shading_heatmap(
@@ -123,32 +124,15 @@ def plot_shading_heatmap(
     az_edges = np.arange(az_min, az_max + azimuth_bin_size, azimuth_bin_size)
     el_edges = np.arange(el_min, el_max + elevation_bin_size, elevation_bin_size)
 
-    n_az = len(az_edges) - 1
-    n_el = len(el_edges) - 1
-
     # ------------------------------------------------------------------ #
-    # Bin indices for each observation                                   #
+    # Accumulate per-bin encoding (n_el rows × n_az cols)                #
     # ------------------------------------------------------------------ #
-    az_idx = np.clip(
-        np.searchsorted(az_edges, solar_azimuth, side="right") - 1, 0, n_az - 1
+    matrix, _, _, _ = binned_statistic_2d(
+        solar_azimuth, solar_elevation, value,
+        statistic=encoding,
+        bins=[az_edges, el_edges],
     )
-    el_idx = np.clip(
-        np.searchsorted(el_edges, solar_elevation, side="right") - 1, 0, n_el - 1
-    )
-
-    # ------------------------------------------------------------------ #
-    # Accumulate per-bin encoding (n_el rows × n_az cols)               #
-    # ------------------------------------------------------------------ #
-    # Combine indices into a single flat key, then group by it
-    flat_idx = el_idx * n_az + az_idx
-    order = np.argsort(flat_idx)
-    sorted_flat = flat_idx[order]
-    sorted_values = value[order]
-
-    matrix = np.full(n_el * n_az, np.nan)
-    for key, group_indices in _groupby_consecutive(sorted_flat):
-        matrix[key] = encoding(sorted_values[group_indices])
-    matrix = matrix.reshape(n_el, n_az)
+    matrix = matrix.T  # rows=elevation, cols=azimuth
 
     # ------------------------------------------------------------------ #
     # Figure / axes                                                      #
@@ -194,14 +178,3 @@ def plot_shading_heatmap(
     ax.set_ylabel("Solar elevation [°]")
 
     return fig, ax
-
-
-def _groupby_consecutive(sorted_keys: np.ndarray):
-    """Yield (key, slice) pairs for runs of equal values in *sorted_keys*."""
-    if len(sorted_keys) == 0:
-        return
-    split_points = np.flatnonzero(np.diff(sorted_keys)) + 1
-    starts = np.concatenate(([0], split_points))
-    ends = np.concatenate((split_points, [len(sorted_keys)]))
-    for key, start, end in zip(sorted_keys[starts], starts, ends):
-        yield key, slice(start, end)
