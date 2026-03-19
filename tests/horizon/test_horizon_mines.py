@@ -9,6 +9,7 @@ import requests
 
 import solarpy
 
+
 def _make_response(elevations: list[float]) -> MagicMock:
     """Build a mock requests.Response with a CSV body matching the API format."""
     # 27 header rows (content doesn't matter, just need the right count)
@@ -24,9 +25,8 @@ _N = 360
 _ELEVATIONS = [float(i % 10) for i in range(_N)]  # deterministic test data
 
 
-# ---------------------------------------------------------------------------
 # Tests
-# ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def mock_get():
