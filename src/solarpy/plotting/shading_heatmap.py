@@ -16,7 +16,7 @@ def plot_shading_heatmap(
     solar_elevation: Any,
     azimuth_bin_size: float = 1.0,
     elevation_bin_size: float = 1.0,
-    encoding: Callable[[np.ndarray], float] = np.max,
+    encoding: Callable[[np.ndarray], float] | str = "max",
     cmap: str = "viridis",
     norm=None,
     colorbar: bool = False,
@@ -48,11 +48,12 @@ def plot_shading_heatmap(
         Width of each azimuth bin in degrees. Default is ``1.0``.
     elevation_bin_size : float, optional
         Height of each elevation bin in degrees. Default is ``1.0``.
-    encoding : callable, optional
-        Reduction function applied to the values in each bin. Must accept
-        a 1-D ``np.ndarray`` and return a scalar. Common choices are
-        ``np.max``, ``np.mean``, ``np.median``, and ``len`` (bin count).
-        Default is ``np.max``.
+    encoding : callable or str, optional
+        Reduction function applied to the values in each bin. Accepts any
+        string supported by ``scipy.stats.binned_statistic_2d`` (``'max'``,
+        ``'min'``, ``'mean'``, ``'median'``, ``'sum'``, ``'count'``), or a
+        callable that takes a 1-D ``np.ndarray`` and returns a scalar, e.g.
+        ``lambda x: np.quantile(x, 0.95)``. Default is ``'max'``.
     cmap : str, optional
         Matplotlib colormap name. Default is ``"viridis"``.
     norm : matplotlib.colors.Normalize, optional
@@ -96,12 +97,6 @@ def plot_shading_heatmap(
     >>> irradiance = np.sin(np.radians(elevation)) * 1000 + np.random.randn(n) * 50
     >>> fig, ax = solarpy.plotting.plot_shading_heatmap(
     ...     irradiance, azimuth, elevation)
-
-    For using a custom *encoding*:
-
-    >>> fig, ax = solarpy.plotting.plot_shading_heatmap(
-    ...     irradiance, azimuth, elevation,
-    ...     encoding=lambda x: np.quantile(x, 0.99),)
     """
     value = np.asarray(value, dtype=float)
     solar_azimuth = np.asarray(solar_azimuth, dtype=float)
