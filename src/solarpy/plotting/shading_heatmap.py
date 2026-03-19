@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Callable
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,20 +15,19 @@ def plot_shading_heatmap(
     solar_elevation: Any,
     azimuth_bin_size: float = 1.0,
     elevation_bin_size: float = 1.0,
+    encoding: Callable[[np.ndarray], float] = np.max,
     cmap: str = "viridis",
     norm=None,
     colorbar: bool = False,
-    colorbar_label=None,
+    colorbar_label: str | None = None,
     ax: plt.Axes = None,
-    figsize: tuple = (5, 7),
     pcolormesh_kwargs: dict | None = None,
 ) -> tuple[plt.Figure, plt.Axes]:
     """Plot a heatmap of solar irradiance in azimuth–elevation space.
 
     Each cell of the heatmap represents a bin of solar azimuth (x-axis)
-    and solar elevation (y-axis). Cell colour encodes the *maximum*
-    irradiance value observed in that bin. Bins with no data are shown
-    as white cells.
+    and solar elevation (y-axis). Cell colour encodes the value returned
+    by *encoding* for all observations in that bin.
 
     It is recommended to first filter out obvious outliers using
     automatic QC checks.
@@ -48,8 +47,11 @@ def plot_shading_heatmap(
         Width of each azimuth bin in degrees. Default is ``1.0``.
     elevation_bin_size : float, optional
         Height of each elevation bin in degrees. Default is ``1.0``.
-    encoding : function, optional
-        Method for encoding the values in each bin. Default is ``np.max``.
+    encoding : callable, optional
+        Reduction function applied to the values in each bin. Must accept
+        a 1-D ``np.ndarray`` and return a scalar. Common choices are
+        ``np.max``, ``np.mean``, ``np.median``, and ``len`` (bin count).
+        Default is ``np.max``.
     cmap : str, optional
         Matplotlib colormap name. Default is ``"viridis"``.
     norm : matplotlib.colors.Normalize, optional
@@ -62,9 +64,6 @@ def plot_shading_heatmap(
         Label displayed alongside the colorbar.
     ax : matplotlib.axes.Axes, optional
         Axes to draw on. If ``None``, a new figure and axes are created.
-    figsize : tuple
-        The size of the figure if *ax* is not specified. Default is
-        ``(5, 7)``.
     pcolormesh_kwargs : dict, optional
         Extra keyword arguments forwarded directly to ``ax.pcolormesh``.
         Note that ``cmap``, ``norm``, and ``shading`` are set by the
@@ -80,8 +79,8 @@ def plot_shading_heatmap(
 
     Notes
     -----
-    For the heatmap to be usuful for detecting shading in solar irradiance
-    measurement data, the data frquency needs to be less than 10 minutes.
+    For the heatmap to be useful for detecting shading in solar irradiance
+    measurement data, the data frequency needs to be less than 10 minutes.
 
     Only data points with ``solar_elevation >= 0`` are included; negative
     elevations (sun below the horizon) are discarded.
@@ -96,11 +95,16 @@ def plot_shading_heatmap(
     >>> irradiance = np.sin(np.radians(elevation)) * 1000 + np.random.randn(n) * 50
     >>> fig, ax = solarpy.plotting.plot_shading_heatmap(
     ...     irradiance, azimuth, elevation)
+
+    For using a custom *encoding*:
+
+    >>> fig, ax = solarpy.plotting.plot_shading_heatmap(
+    ...     irradiance, azimuth, elevation,
+    ...     encoding=lambda x: np.quantile(x, 0.99),)
     """
     value = np.asarray(value, dtype=float)
     solar_azimuth = np.asarray(solar_azimuth, dtype=float)
     solar_elevation = np.asarray(solar_elevation, dtype=float)
-
 
     # Discard sub-horizon data
     above = solar_elevation >= 0
@@ -133,24 +137,26 @@ def plot_shading_heatmap(
     )
 
     # ------------------------------------------------------------------ #
-    # Accumulate per-bin maximum (n_el rows × n_az cols)                 #
+    # Accumulate per-bin encoding (n_el rows × n_az cols)               #
     # ------------------------------------------------------------------ #
-    matrix = np.full((n_el, n_az), np.nan)
+    # Combine indices into a single flat key, then group by it
+    flat_idx = el_idx * n_az + az_idx
+    order = np.argsort(flat_idx)
+    sorted_flat = flat_idx[order]
+    sorted_values = value[order]
 
-    # Sort by irradiance so the last write into each cell is the maximum
-    order = np.argsort(value)
-    for i in order:
-        r, c = el_idx[i], az_idx[i]
-        v = value[i]
-        if np.isnan(matrix[r, c]) or v > matrix[r, c]:
-            matrix[r, c] = v
+    matrix = np.full(n_el * n_az, np.nan)
+    for key, group_indices in _groupby_consecutive(sorted_flat):
+        matrix[key] = encoding(sorted_values[group_indices])
+    matrix = matrix.reshape(n_el, n_az)
 
     # ------------------------------------------------------------------ #
     # Figure / axes                                                      #
     # ------------------------------------------------------------------ #
     if ax is None:
-        fig, ax = plt.subplots(figsize=figsize)
-    fig = ax.figure
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.figure
 
     # ------------------------------------------------------------------ #
     # pcolormesh                                                         #
@@ -177,7 +183,7 @@ def plot_shading_heatmap(
     # ------------------------------------------------------------------ #
     # Axes labels and ticks                                              #
     # ------------------------------------------------------------------ #
-    ax.set_xticks(np.arange(0, 360+1, 90))
+    ax.set_xticks(np.arange(0, 360 + 1, 90))
     ax.set_xlim(0, 360)
     ax.set_xlabel("Solar azimuth [°]")
 
@@ -188,3 +194,14 @@ def plot_shading_heatmap(
     ax.set_ylabel("Solar elevation [°]")
 
     return fig, ax
+
+
+def _groupby_consecutive(sorted_keys: np.ndarray):
+    """Yield (key, slice) pairs for runs of equal values in *sorted_keys*."""
+    if len(sorted_keys) == 0:
+        return
+    split_points = np.flatnonzero(np.diff(sorted_keys)) + 1
+    starts = np.concatenate(([0], split_points))
+    ends = np.concatenate((split_points, [len(sorted_keys)]))
+    for key, start, end in zip(sorted_keys[starts], starts, ends):
+        yield key, slice(start, end)
