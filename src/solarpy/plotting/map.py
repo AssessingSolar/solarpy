@@ -79,7 +79,6 @@ def plot_google_maps(
         "center": f"{latitude},{longitude}",
         "zoom": zoom,
         "size": f"{size[0]}x{size[1]}",
-        "markers": f"color:red|{latitude},{longitude}",
         "maptype": map_type,
         "key": api_key,
     }
