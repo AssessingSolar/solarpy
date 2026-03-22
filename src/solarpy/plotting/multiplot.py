@@ -20,15 +20,17 @@ def create_multiplot_layout(figsize=(24, 16)):
     -------
     fig : matplotlib.figure.Figure
     axes : dict with keys:
-        'ts'    : list of 9 axes  — time series (left column)
-        'mid_l'   : list of 4 axes  — (middle-left)
-        'mid_r'   : list of 4 axes  — (middle-right)
-        'maps'  : list of 3 axes — maps
-        'meta'  : metadata text
-        'hist'  : list of 3 axes  — histograms
+        'line' : list of 3 axes - time series line charts
+        'heatmap' : list of 3 axes - intraday heat maps
+        'ts_scatter : list of 3 axes - time series scatter
+        'mid_l' : list of 4 axes  - (middle-left)
+        'mid_r' : list of 4 axes  - (middle-right)
+        'maps' : list of 3 axes - maps
+        'meta' : metadata text
+        'hist' : list of 3 axes  - histograms
         'corr' : cross-correlation
-        'sun1'  : sun-path GHI/TOA
-        'sun2'  : sun-path DNI/TOANI
+        'sun1' : sun-path GHI/TOA
+        'sun2' : sun-path DNI/TOANI
     """
     fig = plt.figure(figsize=figsize)
 
@@ -38,23 +40,25 @@ def create_multiplot_layout(figsize=(24, 16)):
         wspace=0.15, width_ratios=[1, 0.6, 0.6, 1],
     )
 
-    # Column 0 — 9 time-series rows
+    # Column 0 - 9 time-series rows
     gs_left = gridspec.GridSpecFromSubplotSpec(
         9, 1, subplot_spec=outer[0], hspace=0.1,
         height_ratios=[1, 1, 1, 1, 1, 1, 1, 1, 1.4],
         # bottom subplot has extra height to accommodate x-ticks
     )
-    ax_ts = [fig.add_subplot(gs_left[i]) for i in range(9)]
+    ax_line = [fig.add_subplot(gs_left[i]) for i in range(0, 3)]
+    ax_heatmap = [fig.add_subplot(gs_left[i]) for i in range(3, 6)]
+    ax_ts_scatter = [fig.add_subplot(gs_left[i]) for i in range(6, 9)]
 
-    # Column 1 — 4 left scatter plots
+    # Column 1 - 4 left scatter plots
     gs_mid_l = gridspec.GridSpecFromSubplotSpec(4, 1, subplot_spec=outer[1], hspace=0.2)
     ax_mid_l = [fig.add_subplot(gs_mid_l[i]) for i in range(4)]
 
-    # Column 2 — 4 right scatter plots
+    # Column 2 - 4 right scatter plots
     gs_mid_r = gridspec.GridSpecFromSubplotSpec(4, 1, subplot_spec=outer[2], hspace=0.2)
     ax_mid_r = [fig.add_subplot(gs_mid_r[i]) for i in range(4)]
 
-    # Column 3 — nested layout
+    # Column 3 - nested layout
     gs_right = gridspec.GridSpecFromSubplotSpec(
         6, 1, subplot_spec=outer[3], hspace=0.1,
         height_ratios=[1.5, 1, 1.2, 1.2, 1.4, 1.4],
@@ -71,7 +75,8 @@ def create_multiplot_layout(figsize=(24, 16)):
     ax_sun2  = fig.add_subplot(gs_right[5])
 
     axes = dict(
-        ts=ax_ts, mid_l=ax_mid_l, mid_r=ax_mid_r,
+        line=ax_line, heatmap=ax_heatmap, ts_scatter=ax_ts_scatter,
+        mid_l=ax_mid_l, mid_r=ax_mid_r,
         maps=ax_maps, meta=ax_meta,
         hist=ax_hist, corr=ax_corr, sun1=ax_sun1, sun2=ax_sun2,
     )
@@ -98,21 +103,21 @@ def create_multiplot(data, meta, horizon, figsize=(24, 16)):
     # Time series plots
     # xxx: pandas dependency
     # resampling to speed up the process
-    for ax, c in zip(axes['ts'][0:3], components)
+    for ax, c in zip(axes['line'], components):
         ax.plot(data[c].resample('5min').max(), lw=0.5)
         ax.set_ylabel(f"{c.upper} [W/m²]")
 
     # Intraday heat map plots
     cmap, norm = irradiance_colormap_and_norm(vmax=1000)
-    for ax, c in zip(axes['ts'][3:6], components):
+    for ax, c in zip(axes['heatmap'], components):
         plot_intraday_heatmap(time=data.index, values=data[c], ax=ax,
-                              plot_colorbar: False, cmap: cmap, norm: norm)
+                              plot_colorbar=False, cmap=cmap, norm=norm)
         ax.text(0.02, 0.95, c.upper(), va='top', ha='left', transform=ax.transAxes)
 
     # TODO: Plot sunrise/sunset lines
-    _ = [ax.set_xticks([]) for ax in axes['ts'][:-1]]
+    _ = [ax.set_xticks([]) for ax in axes['line'] + axes['heatmap'] + axes['ts_scatter']]
     
-    for ax, qty in zip(axes['ts'][6:], ['K', 'GHIratio', 'kc']):
+    for ax, qty in zip(axes['ts_scatter'], ['K', 'GHIratio', 'kc']):
         Plot_TimeseriesRatio(
             data.rename(columns={'ghi': 'GHI', 'dhi': 'DIF', 'dni': 'DNI',
                                  'ghi_extra': 'TOA', 'ghi_calc': 'GHI_est',
