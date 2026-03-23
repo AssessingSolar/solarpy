@@ -72,7 +72,8 @@ def read_t16(filename, drop_dates=False, map_variables=False,
 
     datetime_columns = ['Year', 'Month', 'Day', 'Hour', 'Minute']
 
-    data.index = pd.to_datetime(data[datetime_columns].rename(columns=str.lower)).dt.tz_localize('UTC')
+    data.index = pd.to_datetime(
+        data[datetime_columns].rename(columns=str.lower)).dt.tz_localize('UTC')
 
     if drop_dates:
         data = data.drop(columns=datetime_columns)
