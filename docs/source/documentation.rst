@@ -13,3 +13,5 @@ Code documentation
    plotting.plot_intraday_heatmap
    plotting.plot_shading_heatmap
    horizon.get_horizon_mines
+   quality.bsrn_limit
+   quality.bsrn_limit_flag
