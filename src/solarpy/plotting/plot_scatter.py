@@ -1,15 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.ndimage import gaussian_filter
 
 
-def conv2(v1, v2, m, mode='same'):
-    
-    tmp = np.apply_along_axis(np.convolve, 0, m, v1, mode)
-    return np.apply_along_axis(np.convolve, 1, tmp, v2, mode)
-
-
-def plot_scatter_heatmap(x, y, plot_type='scatter', cmap='viridis', norm=None,
-                         xlim=(0, 95), ylim=(0, 1.4),
+def plot_scatter_heatmap(x, y, xlim, ylim, plot_type='scatter', cmap='viridis', norm=None,
+                         sigma=None, sort_points=False,
                          xbins=100, ybins=100, mincnt=1, ax=None, **kwargs):
     x, y = np.asarray(x), np.asarray(y)
     finite = np.isfinite(x) & np.isfinite(y)
@@ -20,10 +15,13 @@ def plot_scatter_heatmap(x, y, plot_type='scatter', cmap='viridis', norm=None,
 
     H, xedges, yedges = np.histogram2d(
         x[finite], y[finite], bins=(xbins, ybins), range=(xlim, ylim))
-    #hist=conv2(x[finite], y[finite], H)
+
+    if sigma is not None:
+        H = gaussian_filter(H, sigma=sigma)
+
+    H[H < mincnt] = np.nan
 
     if plot_type == 'hist2d':
-        H[H < mincnt] = np.nan
         ax.pcolormesh(xedges, yedges, H.T, cmap=cmap, norm=norm, **kwargs)
 
     elif plot_type == 'scatter':
@@ -31,8 +29,12 @@ def plot_scatter_heatmap(x, y, plot_type='scatter', cmap='viridis', norm=None,
         ycenters = (yedges[:-1] + yedges[1:]) / 2
         X, Y = np.meshgrid(xcenters, ycenters)
         counts = H.T.flatten()
-        mask = counts > mincnt
-        ax.scatter(X.flatten()[mask], Y.flatten()[mask], c=counts[mask],
+        if sort_points:
+            order = np.argsort(counts)
+        else:
+            order = np.arange(len(counts))
+        
+        ax.scatter(X.flatten()[order], Y.flatten()[order], c=counts[order],
                    cmap=cmap, norm=norm, **kwargs)
 
     else:
