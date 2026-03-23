@@ -13,3 +13,4 @@ Code documentation
    plotting.plot_intraday_heatmap
    plotting.plot_shading_heatmap
    horizon.get_horizon_mines
+   iotools.read_t16
