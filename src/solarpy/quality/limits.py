@@ -1,4 +1,4 @@
-"""Functions for BSRN quality control tests on irradiance measurements."""
+"""Functions for BSRN quality control irradiance limit tests."""
 
 import numpy as np
 
@@ -13,8 +13,16 @@ _BSRN_LIMITS = {
 }
 
 
-def bsrn_limit(solar_zenith, dni_extra, limit):
+def bsrn_limit(solar_zenith, dni_extra, limits):
     """Calculate the BSRN upper and/or lower irradiance limit values.
+
+    The BSRN upper and lower bound limit checks were developed by Long & Shi
+    (2008). The upper limit follows the form::
+
+        upper = a * DNI_extra * cos(solar_zenith) ^ b + c
+
+    where *a*, *b*, and *c* are coefficients that depend on the variable
+    and test level. A value is flagged if it lies outside [lower, upper].
 
     Parameters
     ----------
@@ -22,7 +30,7 @@ def bsrn_limit(solar_zenith, dni_extra, limit):
         Solar zenith angle [degrees].
     dni_extra : array-like of float
         Extraterrestrial normal irradiance [W/m²].
-    limit : str or tuple of float
+    limits : str or tuple of float
         Either a named limit string or a tuple ``(a, b, c, lower)``.
 
         Named limit (Long & Shi, 2008):
@@ -51,25 +59,29 @@ def bsrn_limit(solar_zenith, dni_extra, limit):
 
     References
     ----------
-    Long, C. N. & Shi, Y. (2008). *An Automated Quality Assessment and Control
-    Algorithm for Surface Radiation Measurements*.
-    `BSRN recommended QC tests v2
-    <https://bsrn.awi.de/fileadmin/user_upload/bsrn.awi.de/Publications/BSRN_recommended_QC_tests_V2.pdf>`_
+    .. [1] C. N. Long and Y. Shi, "An Automated Quality Assessment and Control
+       Algorithm for Surface Radiation Measurements," *The Open Atmospheric
+       Science Journal*, vol. 2, no. 1, pp. 23–37, Apr. 2008.
+       :doi:`10.2174/1874282300802010023`
+    .. [2] C. N. Long and Y. Shi, "An Automated Quality Assessment and Control
+       Algorithm for Surface Radiation Measurements," BSRN, 2008. [Online].
+       Available: `BSRN recommended QC tests v2
+       <https://bsrn.awi.de/fileadmin/user_upload/bsrn.awi.de/Publications/BSRN_recommended_QC_tests_V2.pdf>`_
     """
-    if isinstance(limit, str):
-        if limit not in _BSRN_LIMITS:
+    if isinstance(limits, str):
+        if limits not in _BSRN_LIMITS:
             raise ValueError(
-                f"Unknown limit '{limit}'. "
+                f"Unknown limit '{limits}'. "
                 f"Valid options are: {list(_BSRN_LIMITS.keys())}."
             )
-        a, b, c, lower = _BSRN_LIMITS[limit]
-    elif isinstance(limit, tuple):
-        if len(limit) != 4:
+        a, b, c, lower = _BSRN_LIMITS[limits]
+    elif isinstance(limits, tuple):
+        if len(limits) != 4:
             raise ValueError(
                 f"limit tuple must have 4 elements (a, b, c, lower), "
-                f"got {len(limit)}."
+                f"got {len(limits)}."
             )
-        a, b, c, lower = limit
+        a, b, c, lower = limits
     else:
         raise ValueError("limit must be a string or a tuple of 4 floats.")
 
@@ -79,16 +91,8 @@ def bsrn_limit(solar_zenith, dni_extra, limit):
     return lower, upper
 
 
-def bsrn_limit_flag(irradiance, solar_zenith, dni_extra, limit, check='both', nan_flag=True):
-    """Flag irradiance values that fail a BSRN quality control limit.
-
-    Applies the upper and lower bound checks from Long & Shi (2008). The
-    upper limit follows the form::
-
-        upper = a * DNI_extra * cos(solar_zenith) ^ b + c
-
-    where *a*, *b*, and *c* are coefficients that depend on the variable
-    and test level. A value is flagged if it lies outside [lower, upper].
+def bsrn_limit_flag(irradiance, solar_zenith, dni_extra, limits, check='both', nan_flag=True):
+    """Flag irradiance values that fall outside the BSRN quality control limits.
 
     Parameters
     ----------
@@ -99,7 +103,7 @@ def bsrn_limit_flag(irradiance, solar_zenith, dni_extra, limit, check='both', na
     dni_extra : array-like of float
         Extraterrestrial normal irradiance [W/m²]. Must be the same length
         as *irradiance*.
-    limit : str or tuple of float
+    limits : str or tuple of float
         Either a named limit string or a tuple of coefficients
         ``(a, b, c, lower)``.
 
@@ -128,6 +132,10 @@ def bsrn_limit_flag(irradiance, solar_zenith, dni_extra, limit, check='both', na
         the value failed the test (outside bounds), ``False`` indicates
         it passed.
 
+    See Also
+    --------
+    bsrn_limit : Calculate the limit values without testing.
+
     Examples
     --------
     Test GHI measurements against the BSRN limits:
@@ -151,25 +159,25 @@ def bsrn_limit_flag(irradiance, solar_zenith, dni_extra, limit, check='both', na
     >>> ghi = np.clip(900 * cos_sza + rng.standard_normal(8760) * 20, 0, None)
     >>>
     >>> # Run PPL and ERL tests
-    >>> ppl_flag = bsrn_limit_flag(ghi, solar_zenith, dni_extra, limit="ppl-ghi")
-    >>> erl_flag = bsrn_limit_flag(ghi, solar_zenith, dni_extra, limit="erl-ghi")
+    >>> ppl_flag = bsrn_limit_flag(ghi, solar_zenith, dni_extra, limits="ppl-ghi")
+    >>> erl_flag = bsrn_limit_flag(ghi, solar_zenith, dni_extra, limits="erl-ghi")
 
     Use custom coefficients:
 
-    >>> flag = bsrn_limit_flag(ghi, solar_zenith, dni_extra, limit=(1.2, 1.2, 50, -4))
-
-    See Also
-    --------
-    bsrn_limit : Calculate the limit values without testing.
+    >>> flag = bsrn_limit_flag(ghi, solar_zenith, dni_extra, limits=(1.2, 1.2, 50, -4))
 
     References
     ----------
-    Long, C. N. & Shi, Y. (2008). *An Automated Quality Assessment and Control
-    Algorithm for Surface Radiation Measurements*.
-    `BSRN recommended QC tests v2
-    <https://bsrn.awi.de/fileadmin/user_upload/bsrn.awi.de/Publications/BSRN_recommended_QC_tests_V2.pdf>`_
+    .. [1] C. N. Long and Y. Shi, "An Automated Quality Assessment and Control
+       Algorithm for Surface Radiation Measurements," *The Open Atmospheric
+       Science Journal*, vol. 2, no. 1, pp. 23–37, Apr. 2008.
+       :doi:`10.2174/1874282300802010023`
+    .. [2] C. N. Long and Y. Shi, "An Automated Quality Assessment and Control
+       Algorithm for Surface Radiation Measurements," BSRN, 2008. [Online].
+       Available: `BSRN recommended QC tests v2
+       <https://bsrn.awi.de/fileadmin/user_upload/bsrn.awi.de/Publications/BSRN_recommended_QC_tests_V2.pdf>`_
     """
-    lower, upper = bsrn_limit(solar_zenith, dni_extra, limit)
+    lower, upper = bsrn_limit(solar_zenith, dni_extra, limits)
     if check == 'upper':
         flag = irradiance > upper
     elif check == 'lower':
