@@ -53,7 +53,8 @@ def bsrn_limit(solar_zenith, dni_extra, limit):
     ----------
     Long, C. N. & Shi, Y. (2008). *An Automated Quality Assessment and Control
     Algorithm for Surface Radiation Measurements*.
-    `BSRN recommended QC tests v2 <https://bsrn.awi.de/fileadmin/user_upload/bsrn.awi.de/Publications/BSRN_recommended_QC_tests_V2.pdf>`_
+    `BSRN recommended QC tests v2
+    <https://bsrn.awi.de/fileadmin/user_upload/bsrn.awi.de/Publications/BSRN_recommended_QC_tests_V2.pdf>`_
     """
     if isinstance(limit, str):
         if limit not in _BSRN_LIMITS:
@@ -165,7 +166,8 @@ def bsrn_limit_flag(irradiance, solar_zenith, dni_extra, limit, check='both', na
     ----------
     Long, C. N. & Shi, Y. (2008). *An Automated Quality Assessment and Control
     Algorithm for Surface Radiation Measurements*.
-    `BSRN recommended QC tests v2 <https://bsrn.awi.de/fileadmin/user_upload/bsrn.awi.de/Publications/BSRN_recommended_QC_tests_V2.pdf>`_
+    `BSRN recommended QC tests v2
+    <https://bsrn.awi.de/fileadmin/user_upload/bsrn.awi.de/Publications/BSRN_recommended_QC_tests_V2.pdf>`_
     """
     lower, upper = bsrn_limit(solar_zenith, dni_extra, limit)
     if check == 'upper':
