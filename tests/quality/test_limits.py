@@ -105,13 +105,15 @@ def test_bsrn_limit_flag_value_below_lower_flagged():
 def test_bsrn_limit_flag_check_upper_only():
     lower, _ = bsrn_limit(SZA, DNI_EXTRA, "ppl-ghi")
     # value below lower but only checking upper — should not be flagged
-    assert bsrn_limit_flag(lower - 1, SZA, DNI_EXTRA, "ppl-ghi", check='upper') == False  # noqa: E712
+    result = bsrn_limit_flag(lower - 1, SZA, DNI_EXTRA, "ppl-ghi", check='upper')
+    assert result == False  # noqa: E712
 
 
 def test_bsrn_limit_flag_check_lower_only():
     _, upper = bsrn_limit(SZA, DNI_EXTRA, "ppl-ghi")
     # value above upper but only checking lower — should not be flagged
-    assert bsrn_limit_flag(upper + 1, SZA, DNI_EXTRA, "ppl-ghi", check='lower') == False  # noqa: E712
+    result = bsrn_limit_flag(upper + 1, SZA, DNI_EXTRA, "ppl-ghi", check='lower')
+    assert result == False  # noqa: E712
 
 
 def test_bsrn_limit_flag_nan_flagged_by_default():
@@ -119,7 +121,8 @@ def test_bsrn_limit_flag_nan_flagged_by_default():
 
 
 def test_bsrn_limit_flag_nan_not_flagged_when_nan_flag_false():
-    assert bsrn_limit_flag(np.nan, SZA, DNI_EXTRA, "ppl-ghi", nan_flag=False) == False  # noqa: E712
+    result = bsrn_limit_flag(np.nan, SZA, DNI_EXTRA, "ppl-ghi", nan_flag=False)
+    assert result == False  # noqa: E712
 
 
 def test_bsrn_limit_flag_invalid_check_raises():

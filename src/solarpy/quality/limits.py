@@ -17,7 +17,7 @@ def bsrn_limit(solar_zenith, dni_extra, limits):
     """Calculate the BSRN upper and/or lower irradiance limit values.
 
     The BSRN upper and lower bound limit checks were developed by Long & Shi
-    (2008). The upper limit follows the form::
+    (2008) [1]_, [2]_. The upper limit follows the form::
 
         upper = a * DNI_extra * cos(solar_zenith) ^ b + c
 
@@ -107,7 +107,7 @@ def bsrn_limit_flag(irradiance, solar_zenith, dni_extra, limits, check='both', n
         Either a named limit string or a tuple of coefficients
         ``(a, b, c, lower)``.
 
-        Named limit (Long & Shi, 2008):
+        Named limit (Long & Shi, 2008) [1]_, [2]_:
 
         - ``"ppl-ghi"`` — Physically Possible Limit for GHI
         - ``"erl-ghi"`` — Extremely Rare Limit for GHI
