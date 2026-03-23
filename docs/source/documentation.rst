@@ -15,3 +15,4 @@ Code documentation
    horizon.get_horizon_mines
    quality.bsrn_limit
    quality.bsrn_limit_flag
+   iotools.read_t16
