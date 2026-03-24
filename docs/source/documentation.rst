@@ -11,6 +11,7 @@ Code documentation
    plotting.irradiance_colormap_and_norm
    plotting.plot_google_maps
    plotting.plot_intraday_heatmap
+   instrument.shadowband_correction_factor
    plotting.plot_shading_heatmap
    horizon.get_horizon_mines
    quality.bsrn_limits
