@@ -56,4 +56,3 @@ def test_shadowband_correction_polar():
     assert solarpy.instrument.shadowband_correction_factor("2026-01-01", latitude=90.0) == pytest.approx(1.0)
     # At the pole in summer the sun skims the horizon — C rises above 1
     assert solarpy.instrument.shadowband_correction_factor("2026-06-21", latitude=90.0) > 1.0
-    
