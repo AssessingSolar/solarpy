@@ -14,10 +14,12 @@ def read_t16(filename, drop_dates=False, map_variables=False,
     drop_dates : bool, default False
         If True, drop the Year, Month, Day, Hour, and Minute columns from the
         returned DataFrame. The datetime index is always set regardless.
+    map_variables : bool, default False
+        If True, renames columns of the DataFrame to pvlib variable names
+        (GHI→ghi, DIF→dhi, DNI→dni) and shortens metadata keys to
+        ``latitude``, ``longitude``, and ``altitude``.
     encoding : str, default 'utf-8'
         Encoding of the file passed to ``open()``.
-    map_variables: bool, default: False
-        When true, renames columns of the Dataframe to pvlib variable names
 
     Returns
     -------
@@ -54,8 +56,7 @@ def read_t16(filename, drop_dates=False, map_variables=False,
 
         for k in ['latitude deg N', 'longitude deg E', 'altitude in m amsl',
                   'timezone offset from UTC in hours']:
-            if meta[k] is not None:
-                meta[k] = float(meta[k])
+            meta[k] = float(meta[k])
         if meta['stationcode'] == '':
             meta['stationcode'] = None
 
@@ -69,10 +70,10 @@ def read_t16(filename, drop_dates=False, map_variables=False,
                    'Remarks': str},
         )
 
-    datetime_columns = ['Year','Month','Day','Hour','Minute']
-    data.index = pd.to_datetime(data[datetime_columns])
+    datetime_columns = ['Year', 'Month', 'Day', 'Hour', 'Minute']
 
-    data.index = data.index.tz_localize('UTC')
+    data.index = pd.to_datetime(
+        data[datetime_columns].rename(columns=str.lower)).dt.tz_localize('UTC')
 
     if drop_dates:
         data = data.drop(columns=datetime_columns)
