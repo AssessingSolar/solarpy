@@ -14,4 +14,6 @@ Code documentation
    plotting.plot_shading_heatmap
    plotting.plot_scatter_heatmap
    horizon.get_horizon_mines
+   quality.bsrn_limits
+   quality.bsrn_limits_flag
    iotools.read_t16

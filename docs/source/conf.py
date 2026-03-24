@@ -29,10 +29,15 @@ extensions = [
     'myst_nb',  # markdown and jupyter-notebook parsing
     'sphinx.ext.autodoc',  # generate documentation from docstrings
     'sphinx.ext.autosummary',
+    'sphinx.ext.extlinks',  # short external link roles (e.g. :doi:)
     'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',  # parsing of Numpy docstrings
     'sphinx_copybutton',  # add copy button to code examples
 ]
+
+extlinks = {
+    'doi': ('https://doi.org/%s', 'doi:%s'),
+}
 
 # Configure copybutton to strip >>> when copying code
 copybutton_prompt_text = r">>> |\.\.\. "
