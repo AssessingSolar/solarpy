@@ -13,7 +13,7 @@ _BSRN_LIMITS = {
 }
 
 
-def bsrn_limit(solar_zenith, dni_extra, limits):
+def bsrn_limits(solar_zenith, dni_extra, limits):
     """Calculate the BSRN upper and/or lower irradiance limit values.
 
     The BSRN upper and lower bound limit checks were developed by Long & Shi
@@ -55,7 +55,7 @@ def bsrn_limit(solar_zenith, dni_extra, limits):
 
     See Also
     --------
-    bsrn_limit_flag : Test irradiance values against these limits.
+    bsrn_limits_flag : Test irradiance values against these limits.
 
     References
     ----------
@@ -91,7 +91,7 @@ def bsrn_limit(solar_zenith, dni_extra, limits):
     return lower, upper
 
 
-def bsrn_limit_flag(irradiance, solar_zenith, dni_extra, limits, check='both', nan_flag=True):
+def bsrn_limits_flag(irradiance, solar_zenith, dni_extra, limits, check='both', nan_flag=True):
     """Flag irradiance values that fall outside the BSRN quality control limits.
 
     Parameters
@@ -134,7 +134,7 @@ def bsrn_limit_flag(irradiance, solar_zenith, dni_extra, limits, check='both', n
 
     See Also
     --------
-    bsrn_limit : Calculate the limit values without testing.
+    bsrn_limits : Calculate the limit values without testing.
 
     Examples
     --------
@@ -159,12 +159,12 @@ def bsrn_limit_flag(irradiance, solar_zenith, dni_extra, limits, check='both', n
     >>> ghi = np.clip(900 * cos_sza + rng.standard_normal(8760) * 20, 0, None)
     >>>
     >>> # Run PPL and ERL tests
-    >>> ppl_flag = bsrn_limit_flag(ghi, solar_zenith, dni_extra, limits="ppl-ghi")
-    >>> erl_flag = bsrn_limit_flag(ghi, solar_zenith, dni_extra, limits="erl-ghi")
+    >>> ppl_flag = bsrn_limits_flag(ghi, solar_zenith, dni_extra, limits="ppl-ghi")
+    >>> erl_flag = bsrn_limits_flag(ghi, solar_zenith, dni_extra, limits="erl-ghi")
 
     Use custom coefficients:
 
-    >>> flag = bsrn_limit_flag(ghi, solar_zenith, dni_extra, limits=(1.2, 1.2, 50, -4))
+    >>> flag = bsrn_limits_flag(ghi, solar_zenith, dni_extra, limits=(1.2, 1.2, 50, -4))
 
     References
     ----------
@@ -177,7 +177,7 @@ def bsrn_limit_flag(irradiance, solar_zenith, dni_extra, limits, check='both', n
        Available: `BSRN recommended QC tests v2
        <https://bsrn.awi.de/fileadmin/user_upload/bsrn.awi.de/Publications/BSRN_recommended_QC_tests_V2.pdf>`_
     """
-    lower, upper = bsrn_limit(solar_zenith, dni_extra, limits)
+    lower, upper = bsrn_limits(solar_zenith, dni_extra, limits)
     if check == 'upper':
         flag = irradiance > upper
     elif check == 'lower':
