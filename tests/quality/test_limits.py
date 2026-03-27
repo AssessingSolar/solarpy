@@ -116,13 +116,13 @@ def test_bsrn_limits_flag_check_lower_only():
     assert result == False  # noqa: E712
 
 
-def test_bsrn_limits_flag_nan_flagged_by_default():
-    assert bsrn_limits_flag(np.nan, SZA, DNI_EXTRA, "ppl-ghi") == True  # noqa: E712
+def test_bsrn_limits_flag_nan_not_flagged_by_default():
+    assert bsrn_limits_flag(np.nan, SZA, DNI_EXTRA, "ppl-ghi") == False  # noqa: E712
 
 
-def test_bsrn_limits_flag_nan_not_flagged_when_nan_flag_false():
-    result = bsrn_limits_flag(np.nan, SZA, DNI_EXTRA, "ppl-ghi", nan_flag=False)
-    assert result == False  # noqa: E712
+def test_bsrn_limits_flag_nan_flagged_when_nan_flag_true():
+    result = bsrn_limits_flag(np.nan, SZA, DNI_EXTRA, "ppl-ghi", nan_flag=True)
+    assert result == True  # noqa: E712
 
 
 def test_bsrn_limits_flag_invalid_check_raises():
@@ -146,8 +146,8 @@ def test_bsrn_limits_flag_pandas_series():
     assert isinstance(flag, pd.Series)
 
 
-def test_bsrn_limits_flag_nan_in_array_flagged():
+def test_bsrn_limits_flag_nan_in_array_not_flagged_by_default():
     ghi = np.array([500.0, np.nan])
     flag = bsrn_limits_flag(ghi, SZA, DNI_EXTRA, "ppl-ghi")
     assert flag[0] == False  # noqa: E712
-    assert flag[1] == True   # noqa: E712
+    assert flag[1] == False  # noqa: E712

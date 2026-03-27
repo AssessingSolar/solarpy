@@ -93,7 +93,7 @@ def bsrn_limits(solar_zenith, dni_extra, limits):
     return lower, upper
 
 
-def bsrn_limits_flag(irradiance, solar_zenith, dni_extra, limits, check='both', nan_flag=True):
+def bsrn_limits_flag(irradiance, solar_zenith, dni_extra, limits, check='both', nan_flag=False):
     """Flag irradiance values that fall outside the BSRN quality control limits.
 
     Parameters
@@ -125,8 +125,8 @@ def bsrn_limits_flag(irradiance, solar_zenith, dni_extra, limits, check='both', 
     check : {'both', 'upper', 'lower'}, optional
         Which bounds to check. Default is ``'both'``.
     nan_flag : bool, optional
-        Flag value to assign when *irradiance* is NaN. Default is ``True``,
-        which flags NaN values as suspicious.
+        Flag value to assign when *irradiance* is NaN. Default is ``False``,
+        which does not flag NaN values as suspicious.
 
     Returns
     -------
