@@ -54,7 +54,8 @@ doc = [
     "pvlib==0.14.0",
     "pandas==2.3.3",
 ]
-all = ["solarpy[test,doc]"]
+optional = ["kgcpy"]
+all = ["solarpy[optional,test,doc]"]
 
 [project.urls]
 # Documentation = "https://solarpy.readthedocs.io"
