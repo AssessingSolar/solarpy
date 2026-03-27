@@ -4,12 +4,12 @@ import numpy as np
 
 
 _BSRN_LIMITS = {
-    "ppl-ghi": (1.50, 1.2,  100,   -4.),
-    "erl-ghi": (1.20, 1.2,   50,   -2.),
-    "ppl-dni": (1.00, 1.0,    0,   -4.),
-    "erl-dni": (0.95, 0.2,   10,   -2.),
-    "ppl-dhi": (0.95, 1.2,   50,   -4.),
-    "erl-dhi": (0.75, 1.2,   30,   -2.),
+    "ppl-ghi": (1.50, 1.2,  100.,   -4.),
+    "erl-ghi": (1.20, 1.2,   50.,   -2.),
+    "ppl-dni": (1.00, 1.0,    0.,   -4.),
+    "erl-dni": (0.95, 0.2,   10.,   -2.),
+    "ppl-dhi": (0.95, 1.2,   50.,   -4.),
+    "erl-dhi": (0.75, 1.2,   30.,   -2.),
 }
 
 
@@ -19,10 +19,11 @@ def bsrn_limits(solar_zenith, dni_extra, limits):
     The BSRN upper and lower bound limit checks were developed by Long & Shi
     (2008) [1]_, [2]_. The upper limit follows the form::
 
-        upper = a * DNI_extra * cos(solar_zenith) ^ b + c
+        upper = scale * DNI_extra * cos(solar_zenith) ^ exponent + offset
 
-    where *a*, *b*, and *c* are coefficients that depend on the variable
-    and test level. A value is flagged if it lies outside [lower, upper].
+    where *scale*, *exponent*, and *offset* are coefficients that depend on
+    the variable and test level. A value is flagged if it lies outside
+    [lower, upper].
 
     Parameters
     ----------
@@ -31,7 +32,7 @@ def bsrn_limits(solar_zenith, dni_extra, limits):
     dni_extra : array-like of float
         Extraterrestrial normal irradiance [W/m²].
     limits : str or tuple of float
-        Either a named limit string or a tuple ``(a, b, c, lower)``.
+        Either a named limit string or a tuple ``(scale, exponent, offset, lower)``.
 
         Named limit (Long & Shi, 2008):
 
@@ -42,9 +43,10 @@ def bsrn_limits(solar_zenith, dni_extra, limits):
         - ``"ppl-dhi"`` — Physically Possible Limit for DHI
         - ``"erl-dhi"`` — Extremely Rare Limit for DHI
 
-        When passing a tuple, provide ``(a, b, c, lower)`` where the upper
-        bound is ``a * dni_extra * cos(solar_zenith) ** b + c`` and *lower*
-        is the minimum allowed value.
+        When passing a tuple, provide ``(scale, exponent, offset, lower)``
+        where the upper bound is
+        ``scale * dni_extra * cos(solar_zenith) ** exponent + offset`` and
+        *lower* is the minimum allowed value.
 
     Returns
     -------
@@ -64,7 +66,7 @@ def bsrn_limits(solar_zenith, dni_extra, limits):
        Science Journal*, vol. 2, no. 1, pp. 23–37, Apr. 2008.
        :doi:`10.2174/1874282300802010023`
     .. [2] C. N. Long and Y. Shi, "An Automated Quality Assessment and Control
-       Algorithm for Surface Radiation Measurements," BSRN, 2008. [Online].
+       Algorithm for Surface Radiation Measurements," BSRN, 2002. [Online].
        Available: `BSRN recommended QC tests v2
        <https://bsrn.awi.de/fileadmin/user_upload/bsrn.awi.de/Publications/BSRN_recommended_QC_tests_V2.pdf>`_
     """
@@ -74,24 +76,24 @@ def bsrn_limits(solar_zenith, dni_extra, limits):
                 f"Unknown limit '{limits}'. "
                 f"Valid options are: {list(_BSRN_LIMITS.keys())}."
             )
-        a, b, c, lower = _BSRN_LIMITS[limits]
+        scale, exponent, offset, lower = _BSRN_LIMITS[limits]
     elif isinstance(limits, tuple):
         if len(limits) != 4:
             raise ValueError(
-                f"limit tuple must have 4 elements (a, b, c, lower), "
+                f"limit tuple must have 4 elements (scale, exponent, offset, lower), "
                 f"got {len(limits)}."
             )
-        a, b, c, lower = limits
+        scale, exponent, offset, lower = limits
     else:
         raise ValueError("limit must be a string or a tuple of 4 floats.")
 
     cos_sza = np.cos(np.deg2rad(solar_zenith))
-    upper = a * dni_extra * cos_sza ** b + c
+    upper = scale * dni_extra * cos_sza ** exponent + offset
 
     return lower, upper
 
 
-def bsrn_limits_flag(irradiance, solar_zenith, dni_extra, limits, check='both', nan_flag=True):
+def bsrn_limits_flag(irradiance, solar_zenith, dni_extra, limits, check='both', nan_flag=False):
     """Flag irradiance values that fall outside the BSRN quality control limits.
 
     Parameters
@@ -105,7 +107,7 @@ def bsrn_limits_flag(irradiance, solar_zenith, dni_extra, limits, check='both', 
         as *irradiance*.
     limits : str or tuple of float
         Either a named limit string or a tuple of coefficients
-        ``(a, b, c, lower)``.
+        ``(scale, exponent, offset, lower)``.
 
         Named limit (Long & Shi, 2008) [1]_, [2]_:
 
@@ -116,14 +118,15 @@ def bsrn_limits_flag(irradiance, solar_zenith, dni_extra, limits, check='both', 
         - ``"ppl-dhi"`` — Physically Possible Limit for DHI
         - ``"erl-dhi"`` — Extremely Rare Limit for DHI
 
-        When passing a tuple, provide ``(a, b, c, lower)`` where the upper
-        bound is ``a * dni_extra * cos(solar_zenith) ** b + c`` and *lower* is the
-        minimum allowed value.
+        When passing a tuple, provide ``(scale, exponent, offset, lower)`` where the upper
+        bound is
+        ``scale * dni_extra * cos(solar_zenith) ** exponent + offset`` and
+        *lower* is the minimum allowed value.
     check : {'both', 'upper', 'lower'}, optional
         Which bounds to check. Default is ``'both'``.
     nan_flag : bool, optional
-        Flag value to assign when *irradiance* is NaN. Default is ``True``,
-        which flags NaN values as suspicious.
+        Flag value to assign when *irradiance* is NaN. Default is ``False``,
+        which does not flag NaN values as suspicious.
 
     Returns
     -------
@@ -173,7 +176,7 @@ def bsrn_limits_flag(irradiance, solar_zenith, dni_extra, limits, check='both', 
        Science Journal*, vol. 2, no. 1, pp. 23–37, Apr. 2008.
        :doi:`10.2174/1874282300802010023`
     .. [2] C. N. Long and Y. Shi, "An Automated Quality Assessment and Control
-       Algorithm for Surface Radiation Measurements," BSRN, 2008. [Online].
+       Algorithm for Surface Radiation Measurements," BSRN, 2002. [Online].
        Available: `BSRN recommended QC tests v2
        <https://bsrn.awi.de/fileadmin/user_upload/bsrn.awi.de/Publications/BSRN_recommended_QC_tests_V2.pdf>`_
     """

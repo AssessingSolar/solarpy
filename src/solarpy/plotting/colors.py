@@ -54,7 +54,7 @@ def two_part_colormap(start_color='lightgrey', colormap='viridis', n_gradient=64
     >>> x = np.random.randn(100000)
     >>> y = 2 * x + np.random.randn(100000)
     >>> cm = solarpy.plotting.two_part_colormap(
-    ...     start_color='whitesmoke', colormap='plasma', colormap_start=0.05)
+    ...     start_color='lightgrey', colormap='viridis', colormap_start=0.05)
     >>> norm = TwoSlopeNorm(vmin=1, vcenter=30, vmax=175)
     >>> _ = plt.hexbin(x, y, gridsize=100, cmap=cm, norm=norm, mincnt=1)
     """
