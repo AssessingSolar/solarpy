@@ -96,13 +96,24 @@ def plot_shading_heatmap(
     Examples
     --------
     >>> import solarpy
-    >>> import numpy as np
-    >>> n = 50000
-    >>> azimuth = np.random.uniform(90, 270, n)
-    >>> elevation = np.random.uniform(0, 60, n)
-    >>> irradiance = np.sin(np.radians(elevation)) * 1000 + np.random.randn(n) * 50
+    >>> import pandas as pd
+    >>> import pvlib
+    >>> from matplotlib.colors import TwoSlopeNorm
+    >>> times = pd.date_range("2023-01-01", periods=24*8760, freq="min", tz="UTC")
+    >>> loc = pvlib.location.Location(latitude=55.68, longitude=12.57)
+    >>> solpos = loc.get_solarposition(times)
+    >>> dni_clear = loc.get_clearsky(times)["dni"]
+    >>> # create a fictional shading object
+    >>> shading = (solpos['azimuth']>90) & (solpos['azimuth']<110) & (solpos['elevation']<8)
+    >>> dni_clear[shading] = 0  # does not receive direct irradiance
+    >>> dni_extra = pvlib.irradiance.get_extra_radiation(times)
     >>> fig, ax = solarpy.plotting.plot_shading_heatmap(
-    ...     irradiance, azimuth, elevation)
+    ...     value=dni_clear / dni_extra,
+    ...     solar_azimuth=solpos["azimuth"],
+    ...     solar_elevation=solpos["elevation"],
+    ...     cmap=solarpy.plotting.two_part_colormap(),
+    ...     norm=TwoSlopeNorm(vmin=0, vcenter=0.05, vmax=0.7),
+    ... )
     """
     value = np.asarray(value, dtype=float)
     solar_azimuth = np.asarray(solar_azimuth, dtype=float)
