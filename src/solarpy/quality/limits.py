@@ -93,7 +93,7 @@ def bsrn_limits(solar_zenith, dni_extra, limits):
     return lower, upper
 
 
-def bsrn_limits_flag(irradiance, solar_zenith, dni_extra, limits, check='both', nan_flag=False):
+def bsrn_limits_flag(irradiance, solar_zenith, dni_extra, limits, *, check='both', nan_flag=False):
     """Flag irradiance values that fall outside the BSRN quality control limits.
 
     Parameters
@@ -125,8 +125,9 @@ def bsrn_limits_flag(irradiance, solar_zenith, dni_extra, limits, check='both', 
     check : {'both', 'upper', 'lower'}, optional
         Which bounds to check. Default is ``'both'``.
     nan_flag : bool, optional
-        Flag value to assign when *irradiance* is NaN. Default is ``False``,
-        which does not flag NaN values as suspicious.
+        Flag value to assign when *irradiance* is NaN. Value can be either
+        ``True`` or ``False``. Default is ``False``, which does not flag
+        NaN values as suspicious.
 
     Returns
     -------
@@ -138,6 +139,7 @@ def bsrn_limits_flag(irradiance, solar_zenith, dni_extra, limits, check='both', 
     See Also
     --------
     bsrn_limits : Calculate the limit values without testing.
+    diffuse_fraction_flag : Flag measurements based on the diffuse fraction.
 
     Examples
     --------
@@ -175,9 +177,8 @@ def bsrn_limits_flag(irradiance, solar_zenith, dni_extra, limits, check='both', 
        Algorithm for Surface Radiation Measurements," *The Open Atmospheric
        Science Journal*, vol. 2, no. 1, pp. 23–37, Apr. 2008.
        :doi:`10.2174/1874282300802010023`
-    .. [2] C. N. Long and Y. Shi, "An Automated Quality Assessment and Control
-       Algorithm for Surface Radiation Measurements," BSRN, 2002. [Online].
-       Available: `BSRN recommended QC tests v2
+    .. [2] `C. N. Long and E. G. Dutton, "BSRN Global Network recommended QC
+       tests, V2.0," BSRN, 2002.
        <https://bsrn.awi.de/fileadmin/user_upload/bsrn.awi.de/Publications/BSRN_recommended_QC_tests_V2.pdf>`_
     """
     lower, upper = bsrn_limits(solar_zenith, dni_extra, limits)
