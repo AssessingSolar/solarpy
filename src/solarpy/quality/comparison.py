@@ -14,6 +14,8 @@ def diffuse_fraction_flag(ghi, dhi, solar_zenith, *, check='both',
     - K must be < 1.10 for 75° ≤ solar zenith < 93°
     - not tested for GHI ≤ 50 W/m² or solar zenith ≥ 93°
 
+    The comparison test is part of the BSRN QC tests [1]_, [2]_.
+
     Parameters
     ----------
     ghi : array-like of float
