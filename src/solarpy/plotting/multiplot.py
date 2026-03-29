@@ -7,7 +7,7 @@ from solarpy.plotting import (
     irradiance_colormap_and_norm,
     plot_shading_heatmap,
     plot_google_maps,
-    #    plot_scatter_heatmap,
+    plot_scatter_heatmap,
     two_part_colormap,
 )
 import matplotlib.dates as mdates
