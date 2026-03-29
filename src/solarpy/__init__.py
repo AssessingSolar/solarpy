@@ -12,4 +12,5 @@ from solarpy import (  # noqa: F401
     horizon,
     example,
     iotools,
+    processing,
 )
