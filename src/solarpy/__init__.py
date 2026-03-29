@@ -11,4 +11,5 @@ from solarpy import (  # noqa: F401
     quality,
     horizon,
     iotools,
+    processing,
 )
