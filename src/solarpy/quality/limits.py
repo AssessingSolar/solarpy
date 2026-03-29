@@ -4,12 +4,12 @@ import numpy as np
 
 
 _BSRN_LIMITS = {
-    "ppl-ghi": (1.50, 1.2,  100.,   -4.),
-    "erl-ghi": (1.20, 1.2,   50.,   -2.),
-    "ppl-dni": (1.00, 1.0,    0.,   -4.),
-    "erl-dni": (0.95, 0.2,   10.,   -2.),
-    "ppl-dhi": (0.95, 1.2,   50.,   -4.),
-    "erl-dhi": (0.75, 1.2,   30.,   -2.),
+    "ghi-ppl": {"scale": 1.50, "exponent": 1.2, "offset": 100., "lower": -4.},
+    "ghi-erl": {"scale": 1.20, "exponent": 1.2, "offset":  50., "lower": -2.},
+    "dni-ppl": {"scale": 1.00, "exponent": 0.0, "offset":   0., "lower": -4.},
+    "dni-erl": {"scale": 0.95, "exponent": 0.2, "offset":  10., "lower": -2.},
+    "dhi-ppl": {"scale": 0.95, "exponent": 1.2, "offset":  50., "lower": -4.},
+    "dhi-erl": {"scale": 0.75, "exponent": 1.2, "offset":  30., "lower": -2.},
 }
 
 
@@ -31,22 +31,18 @@ def bsrn_limits(solar_zenith, dni_extra, limits):
         Solar zenith angle [degrees].
     dni_extra : array-like of float
         Extraterrestrial normal irradiance [W/m²].
-    limits : str or tuple of float
-        Either a named limit string or a tuple ``(scale, exponent, offset, lower)``.
+    limits : str or dict
+        Either a named limit string or a dict with keys ``scale``, ``exponent``,
+        ``offset``, and ``lower``.
 
-        Named limit (Long & Shi, 2008):
+        Named limits (Long & Shi, 2008):
 
-        - ``"ppl-ghi"`` — Physically Possible Limit for GHI
-        - ``"erl-ghi"`` — Extremely Rare Limit for GHI
-        - ``"ppl-dni"`` — Physically Possible Limit for DNI
-        - ``"erl-dni"`` — Extremely Rare Limit for DNI
-        - ``"ppl-dhi"`` — Physically Possible Limit for DHI
-        - ``"erl-dhi"`` — Extremely Rare Limit for DHI
-
-        When passing a tuple, provide ``(scale, exponent, offset, lower)``
-        where the upper bound is
-        ``scale * dni_extra * cos(solar_zenith) ** exponent + offset`` and
-        *lower* is the minimum allowed value.
+        - ``"ghi-ppl"`` — Physically possible imits for GHI
+        - ``"ghi-erl"`` — Extremely rare limits for GHI
+        - ``"dni-ppl"`` — Physically possible limits for DNI
+        - ``"dni-erl"`` — Extremely rare limits for DNI
+        - ``"dhi-ppl"`` — Physically possible limits for DHI
+        - ``"dhi-erl"`` — Extremely rare limits for DHI
 
     Returns
     -------
@@ -76,16 +72,23 @@ def bsrn_limits(solar_zenith, dni_extra, limits):
                 f"Unknown limit '{limits}'. "
                 f"Valid options are: {list(_BSRN_LIMITS.keys())}."
             )
-        scale, exponent, offset, lower = _BSRN_LIMITS[limits]
-    elif isinstance(limits, tuple):
-        if len(limits) != 4:
+        scale = _BSRN_LIMITS[limits]["scale"]
+        exponent = _BSRN_LIMITS[limits]["exponent"]
+        offset = _BSRN_LIMITS[limits]["offset"]
+        lower = _BSRN_LIMITS[limits]["lower"]
+    elif isinstance(limits, dict):
+        missing = {"scale", "exponent", "offset", "lower"} - limits.keys()
+        if missing:
             raise ValueError(
-                f"limit tuple must have 4 elements (scale, exponent, offset, lower), "
-                f"got {len(limits)}."
+                f"limit dict is missing keys: {sorted(missing)}."
             )
-        scale, exponent, offset, lower = limits
+        scale = limits["scale"]
+        exponent = limits["exponent"]
+        offset = limits["offset"]
+        lower = limits["lower"]
     else:
-        raise ValueError("limit must be a string or a tuple of 4 floats.")
+        raise ValueError(
+            "limits must be a string or a dict with keys scale, exponent, offset, lower.")
 
     cos_sza = np.cos(np.deg2rad(solar_zenith))
     upper = scale * dni_extra * cos_sza ** exponent + offset
@@ -105,23 +108,19 @@ def bsrn_limits_flag(irradiance, solar_zenith, dni_extra, limits, check='both', 
     dni_extra : array-like of float
         Extraterrestrial normal irradiance [W/m²]. Must be the same length
         as *irradiance*.
-    limits : str or tuple of float
-        Either a named limit string or a tuple of coefficients
-        ``(scale, exponent, offset, lower)``.
+    limits : str or dict
+        Either a named limit string or a dict with keys ``scale``, ``exponent``,
+        ``offset``, and ``lower``.
 
         Named limit (Long & Shi, 2008) [1]_, [2]_:
 
-        - ``"ppl-ghi"`` — Physically Possible Limit for GHI
-        - ``"erl-ghi"`` — Extremely Rare Limit for GHI
-        - ``"ppl-dni"`` — Physically Possible Limit for DNI
-        - ``"erl-dni"`` — Extremely Rare Limit for DNI
-        - ``"ppl-dhi"`` — Physically Possible Limit for DHI
-        - ``"erl-dhi"`` — Extremely Rare Limit for DHI
+        - ``"ghi-ppl"`` — Physically Possible Limit for GHI
+        - ``"ghi-erl"`` — Extremely Rare Limit for GHI
+        - ``"dni-ppl"`` — Physically Possible Limit for DNI
+        - ``"dni-erl"`` — Extremely Rare Limit for DNI
+        - ``"dhi-ppl"`` — Physically Possible Limit for DHI
+        - ``"dhi-erl"`` — Extremely Rare Limit for DHI
 
-        When passing a tuple, provide ``(scale, exponent, offset, lower)`` where the upper
-        bound is
-        ``scale * dni_extra * cos(solar_zenith) ** exponent + offset`` and
-        *lower* is the minimum allowed value.
     check : {'both', 'upper', 'lower'}, optional
         Which bounds to check. Default is ``'both'``.
     nan_flag : bool, optional
@@ -162,12 +161,13 @@ def bsrn_limits_flag(irradiance, solar_zenith, dni_extra, limits, check='both', 
     >>> ghi = np.clip(900 * cos_sza + rng.standard_normal(8760) * 20, 0, None)
     >>>
     >>> # Run PPL and ERL tests
-    >>> ppl_flag = bsrn_limits_flag(ghi, solar_zenith, dni_extra, limits="ppl-ghi")
-    >>> erl_flag = bsrn_limits_flag(ghi, solar_zenith, dni_extra, limits="erl-ghi")
+    >>> ppl_flag = bsrn_limits_flag(ghi, solar_zenith, dni_extra, limits="ghi-ppl")
+    >>> erl_flag = bsrn_limits_flag(ghi, solar_zenith, dni_extra, limits="ghi-erl")
 
     Use custom coefficients:
 
-    >>> flag = bsrn_limits_flag(ghi, solar_zenith, dni_extra, limits=(1.2, 1.2, 50, -4))
+    >>> flag = bsrn_limits_flag(ghi, solar_zenith, dni_extra,
+    ...                         limits={"scale": 1.2, "exponent": 1.2, "offset": 50, "lower": -4})
 
     References
     ----------
