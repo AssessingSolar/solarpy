@@ -461,7 +461,10 @@ def create_multiplot(times, data, meta, horizon, google_api_key=None, figsize=(2
     # Statistics text
     min_date, max_date = min(times).date(), max(times).date()
     dt_hours = np.median(np.diff(times.astype("int64"))) / 3.6e12
-    period_text = f"Period: {min_date.strftime('%Y-%m-%d')} to {max_date.strftime('%Y-%m-%d')}  (days: {days})"
+    period_text = (
+        f"Period: {min_date.strftime('%Y-%m-%d')} to "
+        f"{max_date.strftime('%Y-%m-%d')}  (days: {days})"
+    )
     axes["meta"].text(
         0.4, 0.98, period_text, va="top", ha="left", transform=axes["meta"].transAxes
     )
