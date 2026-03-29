@@ -5,11 +5,13 @@ import matplotlib.gridspec as gridspec
 from solarpy.plotting import (
     plot_intraday_heatmap, irradiance_colormap_and_norm,
     plot_shading_heatmap, plot_google_maps,
-    plot_scatter_heatmap, two_part_colormap)
+#    plot_scatter_heatmap,
+ two_part_colormap)
 import matplotlib.dates as mdates
 from matplotlib.colors import TwoSlopeNorm
+import pandas as pd
 
-
+# %%
 def _create_multiplot_layout(figsize=(24, 16)):
     """
     Create the visual plausibility control figure layout.
@@ -113,10 +115,7 @@ def create_multiplot(times, data, meta, horizon, google_api_key=None, figsize=(2
         plot_intraday_heatmap(time=times, values=data[c], ax=ax,
                               plot_colorbar=False, cmap=cmap, norm=norm)
         ax.text(0.02, 0.95, c.upper(), va='top', ha='left', transform=ax.transAxes)
-
     # TODO: Plot sunrise/sunset lines
-    [ax.set_xticks([]) for ax in axes['line'] + axes['heatmap'] + axes['ts_scatter']]
-    fig.align_ylabels(axes['line'] + axes['heatmap'] + axes['ts_scatter'])
 
     ts_scatter_params = dict(
         xlim=mdates.date2num(ts_xlim),
@@ -171,7 +170,11 @@ def create_multiplot(times, data, meta, horizon, google_api_key=None, figsize=(2
     for ax in axes['ts_scatter']:
         ax.axhline(1, linestyle='--', **limit_line_params)
 
-    # TODO: add xticklabels to last subplot
+    fig.align_ylabels(axes['line'] + axes['heatmap'] + axes['ts_scatter'])
+    # remove xticks
+    [ax.set_xticks([]) for ax in axes['line'] + axes['heatmap'] + axes['ts_scatter']]
+    ts_xticks = pd.date_range(ts_xlim[0], ts_xlim[1], freq='MS')
+    axes['ts_scatter'][2].set_xticks(ts_xticks, ts_xticks.strftime("%b %Y"))
 
     # Scatter plot settings
     scatter_params = {
@@ -183,6 +186,7 @@ def create_multiplot(times, data, meta, horizon, google_api_key=None, figsize=(2
     }
 
     # Irradiance vs. TOA
+    discrete_toa = np.linspace(1, 1320)
     scatter_vmax = {'ghi': 175, 'dni': 50, 'dhi': 250}  # less points for dni
     for ax, c in zip(axes['mid_l'][:3], components):
         plot_scatter_heatmap(
@@ -192,6 +196,16 @@ def create_multiplot(times, data, meta, horizon, google_api_key=None, figsize=(2
             xlim=(0, 1400), ylim=(0, 1600),
             norm=TwoSlopeNorm(vmin=1, vcenter=20, vmax=scatter_vmax[c]),
             **scatter_params)
+        # Plot BSRN upper limits for irradiance
+        for limit_type in ['erl', 'ppl']:
+            limit = f"{limit_type}-{c}"
+            # TODO: Check implementation if this is truly upper and lower bounds
+            # TODO: ppl-dni does not render correctly
+            low_extra_lim = bsrn_limits(np.rad2deg(np.arccos(discrete_toa / 1320)), 1320, limit)[1]
+            high_extra_lim = bsrn_limits(np.rad2deg(np.arccos(discrete_toa / 1414)), 1414, limit)[1]
+            # Ensure minimum height difference in order to visualize it
+            high_extra_lim = np.max([high_extra_lim, low_extra_lim + 20], axis=0)
+            ax.fill_between(discrete_toa, low_extra_lim, high_extra_lim, facecolor='r', alpha=0.8)
         ax.set_xlabel("Top of atmosphere (TOA) horizontal [W/m²]")
         ax.set_ylabel(f"{c.upper()} [W/m²]")
 
