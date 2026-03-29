@@ -31,7 +31,6 @@ def bsrn_limits(solar_zenith, dni_extra, limits):
         Solar zenith angle [degrees].
     dni_extra : array-like of float
         Extraterrestrial normal irradiance [W/m²].
-    limits : str or tuple of float
     limits : str or dict
         Either a named limit string or a dict with keys ``scale``, ``exponent``,
         ``offset``, and ``lower``.
