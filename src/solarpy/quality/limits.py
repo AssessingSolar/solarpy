@@ -87,7 +87,8 @@ def bsrn_limits(solar_zenith, dni_extra, limits):
         offset = limits["offset"]
         lower = limits["lower"]
     else:
-        raise ValueError("limits must be a string or a dict with keys scale, exponent, offset, lower.")
+        raise ValueError(
+            "limits must be a string or a dict with keys scale, exponent, offset, lower.")
 
     cos_sza = np.cos(np.deg2rad(solar_zenith))
     upper = scale * dni_extra * cos_sza ** exponent + offset
