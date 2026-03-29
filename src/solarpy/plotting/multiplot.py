@@ -17,7 +17,7 @@ import pandas as pd
 import pvlib
 
 
-def _create_multiplot_layout(figsize=(24, 16)):
+def _multiplot_layout(figsize=(24, 16)):
     """
     Create the visual plausibility control figure layout.
 
@@ -109,21 +109,81 @@ def _create_multiplot_layout(figsize=(24, 16)):
     return fig, axes
 
 
-def create_multiplot(times, data, meta, horizon, google_api_key=None, figsize=(24, 16)):
+def multiplot(times, data, meta, horizon, google_api_key=None, figsize=(24, 16)):
+    """Create a multiplot for visual checking plausibility of irradiance data.
 
+    Produces a multi-panel figure combining time series, intraday heatmaps,
+    scatter plots, sun-path shading heatmaps, histograms, maps, and station
+    metadata for a single solar irradiance measurement site.
+
+    Parameters
+    ----------
+    times : pandas.DatetimeIndex
+        Timestamps of the measurements. Must have a consistent frequency.
+        Consider using :py:func:`solarpy.processing.resample_to_freq`
+    data : pandas.DataFrame
+        Measurement data. Required columns:
+
+        - ``"ghi"`` — Global Horizontal Irradiance [W/m²]
+        - ``"dni"`` — Direct Normal Irradiance [W/m²]
+        - ``"dhi"`` — Diffuse Horizontal Irradiance [W/m²]
+        - ``"solar_zenith"`` — Solar zenith angle [°]
+        - ``"solar_azimuth"`` — Solar azimuth angle [°]
+
+        ``"ghi_extra"``, ``"dni_extra"``, and ``"ghi_calc"`` are computed
+        internally from ``times`` and the irradiance columns.
+
+        Optional columns:
+
+        - ``"ghi_clear"`` — Clearsky GHI [W/m²]; if present together with
+          ``"is_clearsky"``, a clearsky-index time series panel is shown.
+        - ``"is_clearsky"`` — Boolean mask for clearsky conditions; see
+          ``"ghi_clear"`` above.
+        - ``"flag"`` — Boolean quality flag; if present, flagged and
+          unflagged data are shown separately in the clearness-index
+          histograms.
+
+    meta : dict
+        Station metadata. Required keys: ``"latitude"``, ``"longitude"``.
+        Optional keys: ``"altitude"``, ``"name"``, ``"country"``,
+        ``"climate"``.
+    horizon : pandas.Series
+        Horizon elevation profile indexed by azimuth angle [°]. Overlaid
+        on the sun-path shading plots. See
+        :py:func:` solarpy.horizon.get_horizon_mines`.
+    google_api_key : str, optional
+        Google Maps Static API key. If not specified, the map panels are
+        replaced with a placeholder message.
+    figsize : tuple of (float, float), default (24, 16)
+        Figure size in inches ``(width, height)``.
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+        The multiplot figure.
+    axes : dict
+        Dictionary of axes, with keys ``"line"``, ``"heatmap"``,
+        ``"ts_scatter"``, ``"mid_l"``, ``"mid_r"``, ``"maps"``,
+        ``"meta"``, ``"hist"``, ``"corr"``, ``"sun1"``, ``"sun2"``.
+    """
     # Derive variables
+    dni_extra = pvlib.irradiance.get_extra_radiation(times)
+    cos_sza = np.cos(np.deg2rad(data["solar_zenith"])).clip(lower=0)
+    ghi_extra = dni_extra * cos_sza
+    ghi_calc = data["dhi"].clip(lower=0) + data["dni"].clip(lower=0) * cos_sza
+
     components = ["ghi", "dni", "dhi"]
     is_daytime = data["solar_zenith"] < 90
     is_ghi_above_50 = is_daytime & ((data["ghi"] > 50) | (data["dhi"] > 50))
     is_overcast = is_ghi_above_50 & (data["dni"] < 5)
     has_flag = "flag" in data.columns
 
-    Kt = data["ghi"] / data["ghi_extra"]
-    Kn = data["dni"] / data["dni_extra"]
-    Kd = data["dhi"] / data["ghi_extra"]
+    Kt = data["ghi"] / ghi_extra
+    Kn = data["dni"] / dni_extra
+    Kd = data["dhi"] / ghi_extra
     K = data["dhi"] / data["ghi"]
 
-    fig, axes = _create_multiplot_layout(figsize=figsize)
+    fig, axes = _multiplot_layout(figsize=figsize)
 
     ts_xlim = (times.date.min(), times.date.max() + dt.timedelta(days=1))
     days = int(np.ceil((ts_xlim[1] - ts_xlim[0]).days)) + 1
@@ -197,7 +257,7 @@ def create_multiplot(times, data, meta, horizon, google_api_key=None, figsize=(2
     # Closure equation ratio time series scatter plot (all conditions)
     plot_scatter_heatmap(
         x=mdates.date2num(times[is_ghi_above_50]),
-        y=data.loc[is_ghi_above_50, "ghi"] / data.loc[is_ghi_above_50, "ghi_calc"],
+        y=data.loc[is_ghi_above_50, "ghi"] / ghi_calc[is_ghi_above_50],
         ylim=(0.75, 1.25),
         ax=axes["ts_scatter"][1],
         ybins=200,
@@ -207,26 +267,27 @@ def create_multiplot(times, data, meta, horizon, google_api_key=None, figsize=(2
     axes["ts_scatter"][1].set_ylabel("GHI / (DHI + DNI·cos(Z)) [-]")
 
     # Clearsky index time series scatter plot (clearsky conditions)
-    plot_scatter_heatmap(
-        x=mdates.date2num(times[data["is_clearsky"]]),
-        y=data.loc[data["is_clearsky"], "ghi"]
-        / data.loc[data["is_clearsky"], "ghi_clear"],
-        ylim=(0.75, 1.25),
-        ax=axes["ts_scatter"][2],
-        ybins=200,
-        mincnt=1,
-        **ts_scatter_params,
-    )
-    axes["ts_scatter"][2].set_ylabel("Kc = GHI / GHIclear [-]")
-    axes["ts_scatter"][2].text(
-        0.02,
-        0.98,
-        "Clearsky index calculated using McClear for clearsky conditions",
-        ha="left",
-        va="top",
-        alpha=0.75,
-        transform=axes["ts_scatter"][2].transAxes,
-    )
+    if ("ghi_clear" in data.columns) & ("is_clearsky" in data.columns):
+        plot_scatter_heatmap(
+            x=mdates.date2num(times[data["is_clearsky"]]),
+            y=data.loc[data["is_clearsky"], "ghi"]
+            / data.loc[data["is_clearsky"], "ghi_clear"],
+            ylim=(0.75, 1.25),
+            ax=axes["ts_scatter"][2],
+            ybins=200,
+            mincnt=1,
+            **ts_scatter_params,
+        )
+        axes["ts_scatter"][2].set_ylabel("Kc = GHI / GHIclear [-]")
+        axes["ts_scatter"][2].text(
+            0.02,
+            0.98,
+            "Clearsky index calculated using McClear for clearsky conditions",
+            ha="left",
+            va="top",
+            alpha=0.75,
+            transform=axes["ts_scatter"][2].transAxes,
+        )
 
     for ax in axes["ts_scatter"]:
         ax.axhline(1, linestyle="--", **limit_line_params)
@@ -252,7 +313,7 @@ def create_multiplot(times, data, meta, horizon, google_api_key=None, figsize=(2
     scatter_vmax = {"ghi": 175, "dni": 50, "dhi": 250}  # less points for dni
     for ax, c in zip(axes["mid_l"][:3], components):
         plot_scatter_heatmap(
-            x=data.loc[is_daytime, "ghi_extra"],
+            x=ghi_extra[is_daytime],
             y=data.loc[is_daytime, c],
             ax=ax,
             xlim=(0, 1400),
@@ -262,7 +323,7 @@ def create_multiplot(times, data, meta, horizon, google_api_key=None, figsize=(2
         )
         # Plot BSRN upper limits for irradiance
         for limit_type in ["erl", "ppl"]:
-            limit = f"{limit_type}-{c}"
+            limit = f"{c}-{limit_type}"
             # Generate limits for the lowest and highest extraterrestrial irradiance
             low_extra_lim = bsrn_limits(
                 np.rad2deg(np.arccos(discrete_toa / 1320)), 1320, limit
@@ -290,7 +351,7 @@ def create_multiplot(times, data, meta, horizon, google_api_key=None, figsize=(2
     # Closure test
     plot_scatter_heatmap(
         x=data.loc[is_daytime, "ghi"],
-        y=data.loc[is_daytime, "ghi_calc"],
+        y=ghi_calc[is_daytime],
         ax=axes["mid_l"][3],
         xlim=(0, 1400),
         ylim=(0, 1400),
@@ -374,7 +435,7 @@ def create_multiplot(times, data, meta, horizon, google_api_key=None, figsize=(2
     ax = axes["mid_r"][3]
     plot_scatter_heatmap(
         x=data.loc[is_ghi_above_50, "solar_zenith"],
-        y=data.loc[is_ghi_above_50, "ghi"] / data.loc[is_ghi_above_50, "ghi_calc"],
+        y=data.loc[is_ghi_above_50, "ghi"] / ghi_calc[is_ghi_above_50],
         ax=ax,
         xlim=(0, 95),
         ylim=(0.5, 1.5),

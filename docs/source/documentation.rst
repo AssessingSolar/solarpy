@@ -13,6 +13,7 @@ Code documentation
    plotting.plot_intraday_heatmap
    plotting.plot_shading_heatmap
    plotting.plot_scatter_heatmap
+   plotting.multiplot
    horizon.get_horizon_mines
    quality.bsrn_limits
    quality.bsrn_limits_flag
