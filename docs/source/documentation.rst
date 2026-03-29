@@ -16,3 +16,4 @@ Code documentation
    quality.bsrn_limits
    quality.bsrn_limits_flag
    iotools.read_t16
+   processing.resample_to_freq
