@@ -13,9 +13,9 @@ from solarpy.plotting import (
 import matplotlib.dates as mdates
 from matplotlib.colors import TwoSlopeNorm
 import pandas as pd
+import pvlib
 
 
-# %%
 def _create_multiplot_layout(figsize=(24, 16)):
     """
     Create the visual plausibility control figure layout.
@@ -111,6 +111,7 @@ def create_multiplot(times, data, meta, horizon, google_api_key=None, figsize=(2
     is_daytime = data["solar_zenith"] < 90
     is_ghi_above_50 = is_daytime & ((data["ghi"] > 50) | (data["dhi"] > 50))
     is_overcast = is_ghi_above_50 & (data["dni"] < 5)
+    has_flag = "flag" in data.columns
 
     Kt = data["ghi"] / data["ghi_extra"]
     Kn = data["dni"] / data["dni_extra"]
@@ -124,13 +125,24 @@ def create_multiplot(times, data, meta, horizon, google_api_key=None, figsize=(2
     limit_line_params = {"lw": 1.5, "alpha": 0.8, "c": "r"}
 
     # Time series plots
-    # xxx: pandas dependency
+    # TODO: remove pandas dependency
     # resampling to speed up the process
     for ax, c in zip(axes["line"], components):
         ax.plot(data[c].resample("5min").max(), lw=0.5)
         ax.set_ylabel(f"{c.upper()} [W/m²]")
         ax.set_xlim(ts_xlim)
         ax.set_ylim(0, None)
+
+    # Determine sunrise and sunset
+    sun_rise_set = pvlib.solarposition.sun_rise_set_transit_spa(
+        pd.date_range(times.min(), periods=days, freq="1d"), meta["latitude"], meta["longitude"]
+    )
+    sun_rise_minutes = (
+        sun_rise_set["sunrise"].dt.hour.values * 60 + sun_rise_set["sunrise"].dt.minute.values
+    )
+    sun_set_minutes = (
+        sun_rise_set["sunset"].dt.hour.values * 60 + sun_rise_set["sunset"].dt.minute.values
+    )
 
     # Intraday heat map plots
     cmap, norm = irradiance_colormap_and_norm(vmax=1000)
@@ -139,7 +151,8 @@ def create_multiplot(times, data, meta, horizon, google_api_key=None, figsize=(2
             time=times, values=data[c], ax=ax, plot_colorbar=False, cmap=cmap, norm=norm
         )
         ax.text(0.02, 0.95, c.upper(), va="top", ha="left", transform=ax.transAxes)
-    # TODO: Plot sunrise/sunset lines
+        ax.plot(sun_rise_minutes, **limit_line_params)
+        ax.plot(sun_set_minutes, **limit_line_params)
 
     ts_scatter_params = dict(
         xlim=mdates.date2num(ts_xlim),
@@ -288,7 +301,7 @@ def create_multiplot(times, data, meta, horizon, google_api_key=None, figsize=(2
         norm=TwoSlopeNorm(vmin=1, vcenter=40, vmax=250),
         **scatter_params,
     )
-    ax.plot([0, 75, 75, 93], [1.05, 1.05, 1.08, 1.08], ls="--", **limit_line_params)
+    ax.plot([0, 75, 75, 93], [1.05, 1.05, 1.10, 1.10], ls="--", **limit_line_params)
     ax.set_xlabel("Solar zenith [°]")
     ax.set_ylabel("K = DHI / GHI [-]")
     ax.text(0.02, 0.98, "GHI > 50 W/m²", transform=ax.transAxes, ha="left", va="top", alpha=0.5)
@@ -304,8 +317,11 @@ def create_multiplot(times, data, meta, horizon, google_api_key=None, figsize=(2
         norm=TwoSlopeNorm(vmin=1, vcenter=40, vmax=250),
         **scatter_params,
     )
-    # TODO: Check these values
-    ax.plot([0, 0.8, 1.3, 1.3], [0, 0.8, 0.8, 0], ls="--", **limit_line_params)
+    # Kn limit from (Gueymard and Ruiz-Arias 2016): 10.1016/j.solener.2015.10.010
+    # Kn < (1100 + 0.03*altitude) / TOA
+    # Kd limit from (Nollas et al. 2023): 10.1016/j.renene.2022.11.056
+    Kn_limit = (1100 + 0.03 * meta.get("altitude", 0)) / 1320
+    ax.plot([0, Kn_limit, 1.4, 1.4], [0, Kn_limit, Kn_limit, 0], ls="--", **limit_line_params)
     ax.set_xlabel("Kt = GHI / TOA / cos(Z) [-]")
     ax.set_ylabel("Kn = DNI / TOA [-]")
 
@@ -320,8 +336,8 @@ def create_multiplot(times, data, meta, horizon, google_api_key=None, figsize=(2
         norm=TwoSlopeNorm(vmin=1, vcenter=40, vmax=250),
         **scatter_params,
     )
-    # TODO: Check these values
-    ax.plot([0, 0.6, 0.6, 1.3, 1.3], [1.1, 1.1, 1, 1, 0], ls="--", **limit_line_params)
+    # K <= 0.96 for Kt > 0.6 from (Geuder et al. 2015): 10.1016/j.egypro.2015.03.205
+    ax.plot([0, 0.6, 0.6, 1.4, 1.4], [1.1, 1.1, 0.96, 0.96, 0], ls="--", **limit_line_params)
     ax.set_xlabel("Kt = GHI / TOA / cos(Z) [-]")
     ax.set_ylabel("K = DHI / GHI [-]")
 
@@ -355,8 +371,19 @@ def create_multiplot(times, data, meta, horizon, google_api_key=None, figsize=(2
                 ax=ax,
                 size=(400, 400),
             )
+    else:
+        [ax.set_axis_off() for ax in axes["maps"]]
+        axes["maps"][1].text(
+            0.5,
+            0.5,
+            "Maps not shown.\nGoogle API was not provided.",
+            ha="center",
+            va="center",
+            color="grey",
+            transform=axes["maps"][1].transAxes,
+        )
     # Make the maps wider
-    maps_delta = 0.08
+    maps_delta = 0.02
     for ax in axes["maps"]:
         pos = ax.get_position()
         ax.set_position(
@@ -421,20 +448,24 @@ def create_multiplot(times, data, meta, horizon, google_api_key=None, figsize=(2
     dni_threshold = data["dni"] > threshold
     dhi_threshold = data["dhi"] > threshold
     hist_params = dict(range=(0, 1.2), bins=60)
-    axes["hist"][0].hist(Kt[ghi_threshold].dropna(), color="r", **hist_params)
-    axes["hist"][0].hist(Kt[ghi_threshold & ~data["flag"]].dropna(), color="C0", **hist_params)
-    axes["hist"][1].hist(Kn[dni_threshold].dropna(), color="r", **hist_params)
-    axes["hist"][1].hist(Kn[dni_threshold & ~data["flag"]].dropna(), color="C0", **hist_params)
-    axes["hist"][2].hist(Kd[dhi_threshold].dropna(), color="r", **hist_params, label="True")
+    if has_flag:
+        axes["hist"][0].hist(Kt[ghi_threshold].dropna(), color="C1", **hist_params)
+        axes["hist"][1].hist(Kn[dni_threshold].dropna(), color="C1", **hist_params)
+        axes["hist"][2].hist(Kd[dhi_threshold].dropna(), color="C1", **hist_params, label="True")
+        flag_mask = ~data["flag"]
+    else:
+        flag_mask = True
+    axes["hist"][0].hist(Kt[ghi_threshold & flag_mask].dropna(), color="C0", **hist_params)
+    axes["hist"][1].hist(Kn[dni_threshold & flag_mask].dropna(), color="C0", **hist_params)
     axes["hist"][2].hist(
-        Kd[dhi_threshold & ~data["flag"]].dropna(), color="C0", **hist_params, label="False"
+        Kd[dhi_threshold & flag_mask].dropna(), color="C0", **hist_params, label="False"
     )
+    if has_flag:
+        axes["hist"][2].legend(title="Flagged data")
     axes["hist"][0].set_xlabel("Kt = GHI / TOA / cos(Z) [-]")
     axes["hist"][1].set_xlabel("Kn = DNI / TOA [-]")
     axes["hist"][2].set_xlabel("Kd = DHI / TOA / cos(Z) [-]")
     axes["hist"][0].set_ylabel("count (> 5 W/m²)")
-    if (~data["flag"]).any():  # only plot legend if flag is not all False
-        axes["hist"][2].legend(title="Flagged data")
     hist_max_ylim = max([axes["hist"][i].get_ylim()[1] for i in range(3)])
     for ax in axes["hist"]:
         ax.spines[["top", "right"]].set_visible(False)
@@ -447,13 +478,8 @@ def create_multiplot(times, data, meta, horizon, google_api_key=None, figsize=(2
         pos = ax.get_position()
         ax.set_position([pos.x0, pos.y0 + 0.02, pos.width, pos.height - 0.02])
 
-    # plot_clearsky_cross_correlation(
-    #     times=times,
-    #     ghi=data['ghi'],
-    #     ghi_clear=data['ghi_clear'],
-    #     is_clearsky=data['is_clearsky'],
-    #     ax=axes['corr'],
-    # )
+    # TODO: Add correlation plot
+    axes["corr"].set_axis_off()
 
     # Plot shading plots
     shading_clabels = ["Kt = GHI / TOA / cos(Z) [-]", "Kn = DNI / TOA [-]"]
@@ -474,6 +500,3 @@ def create_multiplot(times, data, meta, horizon, google_api_key=None, figsize=(2
     axes["sun1"].set_xlabel(None)
 
     return fig, axes
-
-
-# TODO: Add text describing flags
