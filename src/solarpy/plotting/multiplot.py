@@ -3,13 +3,17 @@ import matplotlib.pyplot as plt
 import datetime as dt
 import matplotlib.gridspec as gridspec
 from solarpy.plotting import (
-    plot_intraday_heatmap, irradiance_colormap_and_norm,
-    plot_shading_heatmap, plot_google_maps,
-#    plot_scatter_heatmap,
- two_part_colormap)
+    plot_intraday_heatmap,
+    irradiance_colormap_and_norm,
+    plot_shading_heatmap,
+    plot_google_maps,
+    #    plot_scatter_heatmap,
+    two_part_colormap,
+)
 import matplotlib.dates as mdates
 from matplotlib.colors import TwoSlopeNorm
 import pandas as pd
+
 
 # %%
 def _create_multiplot_layout(figsize=(24, 16)):
@@ -35,14 +39,23 @@ def _create_multiplot_layout(figsize=(24, 16)):
     fig = plt.figure(figsize=figsize)
 
     outer = gridspec.GridSpec(
-        1, 4, figure=fig,
-        left=0.04, right=0.98, top=0.97, bottom=0.04,
-        wspace=0.15, width_ratios=[1, 0.6, 0.6, 1],
+        1,
+        4,
+        figure=fig,
+        left=0.04,
+        right=0.98,
+        top=0.97,
+        bottom=0.04,
+        wspace=0.15,
+        width_ratios=[1, 0.6, 0.6, 1],
     )
 
     # Column 0 - 9 time-series rows
     gs_left = gridspec.GridSpecFromSubplotSpec(
-        9, 1, subplot_spec=outer[0], hspace=0.1,
+        9,
+        1,
+        subplot_spec=outer[0],
+        hspace=0.1,
         height_ratios=[1, 1, 1, 1, 1, 1, 1, 1, 1.4],
         # bottom subplot has extra height to accommodate x-ticks
     )
@@ -60,23 +73,33 @@ def _create_multiplot_layout(figsize=(24, 16)):
 
     # Column 3 - nested layout
     gs_right = gridspec.GridSpecFromSubplotSpec(
-        6, 1, subplot_spec=outer[3], hspace=0.1,
+        6,
+        1,
+        subplot_spec=outer[3],
+        hspace=0.1,
         height_ratios=[1.5, 0.7, 1.2, 1.2, 1.4, 1.4],
     )
     gs_maps = gridspec.GridSpecFromSubplotSpec(1, 3, subplot_spec=gs_right[0], wspace=0.15)
     ax_maps = [fig.add_subplot(gs_maps[i]) for i in range(3)]
-    ax_meta  = fig.add_subplot(gs_right[1])
-    gs_hist  = gridspec.GridSpecFromSubplotSpec(1, 3, subplot_spec=gs_right[2], wspace=0.15)
-    ax_hist  = [fig.add_subplot(gs_hist[i]) for i in range(3)]
+    ax_meta = fig.add_subplot(gs_right[1])
+    gs_hist = gridspec.GridSpecFromSubplotSpec(1, 3, subplot_spec=gs_right[2], wspace=0.15)
+    ax_hist = [fig.add_subplot(gs_hist[i]) for i in range(3)]
     ax_corr = fig.add_subplot(gs_right[3])
-    ax_sun1  = fig.add_subplot(gs_right[4])
-    ax_sun2  = fig.add_subplot(gs_right[5])
+    ax_sun1 = fig.add_subplot(gs_right[4])
+    ax_sun2 = fig.add_subplot(gs_right[5])
 
     axes = dict(
-        line=ax_line, heatmap=ax_heatmap, ts_scatter=ax_ts_scatter,
-        mid_l=ax_mid_l, mid_r=ax_mid_r,
-        maps=ax_maps, meta=ax_meta,
-        hist=ax_hist, corr=ax_corr, sun1=ax_sun1, sun2=ax_sun2,
+        line=ax_line,
+        heatmap=ax_heatmap,
+        ts_scatter=ax_ts_scatter,
+        mid_l=ax_mid_l,
+        mid_r=ax_mid_r,
+        maps=ax_maps,
+        meta=ax_meta,
+        hist=ax_hist,
+        corr=ax_corr,
+        sun1=ax_sun1,
+        sun2=ax_sun2,
     )
     return fig, axes
 
@@ -84,43 +107,44 @@ def _create_multiplot_layout(figsize=(24, 16)):
 def create_multiplot(times, data, meta, horizon, google_api_key=None, figsize=(24, 16)):
 
     # Derive variables
-    components = ['ghi', 'dni', 'dhi']
-    is_daytime = data['solar_zenith'] < 90
-    is_ghi_above_50 = is_daytime & ((data['ghi'] > 50) | (data['dhi'] > 50))
-    is_overcast = is_ghi_above_50 & (data['dni'] < 5)
+    components = ["ghi", "dni", "dhi"]
+    is_daytime = data["solar_zenith"] < 90
+    is_ghi_above_50 = is_daytime & ((data["ghi"] > 50) | (data["dhi"] > 50))
+    is_overcast = is_ghi_above_50 & (data["dni"] < 5)
 
-    Kt = data['ghi'] / data['ghi_extra']
-    Kn = data['dni'] / data['dni_extra']
-    Kd = data['dhi'] / data['ghi_extra']
-    K = data['dhi'] / data['ghi']
+    Kt = data["ghi"] / data["ghi_extra"]
+    Kn = data["dni"] / data["dni_extra"]
+    Kd = data["dhi"] / data["ghi_extra"]
+    K = data["dhi"] / data["ghi"]
 
     fig, axes = _create_multiplot_layout(figsize=figsize)
 
     ts_xlim = (times.date.min(), times.date.max() + dt.timedelta(days=1))
     days = int(np.ceil((ts_xlim[1] - ts_xlim[0]).days)) + 1
-    limit_line_params = {'lw': 1.5, 'alpha': 0.8, 'c': 'r'}
+    limit_line_params = {"lw": 1.5, "alpha": 0.8, "c": "r"}
 
     # Time series plots
     # xxx: pandas dependency
     # resampling to speed up the process
-    for ax, c in zip(axes['line'], components):
-        ax.plot(data[c].resample('5min').max(), lw=0.5)
+    for ax, c in zip(axes["line"], components):
+        ax.plot(data[c].resample("5min").max(), lw=0.5)
         ax.set_ylabel(f"{c.upper()} [W/m²]")
         ax.set_xlim(ts_xlim)
         ax.set_ylim(0, None)
 
     # Intraday heat map plots
     cmap, norm = irradiance_colormap_and_norm(vmax=1000)
-    for ax, c in zip(axes['heatmap'], components):
-        plot_intraday_heatmap(time=times, values=data[c], ax=ax,
-                              plot_colorbar=False, cmap=cmap, norm=norm)
-        ax.text(0.02, 0.95, c.upper(), va='top', ha='left', transform=ax.transAxes)
+    for ax, c in zip(axes["heatmap"], components):
+        plot_intraday_heatmap(
+            time=times, values=data[c], ax=ax, plot_colorbar=False, cmap=cmap, norm=norm
+        )
+        ax.text(0.02, 0.95, c.upper(), va="top", ha="left", transform=ax.transAxes)
     # TODO: Plot sunrise/sunset lines
 
     ts_scatter_params = dict(
         xlim=mdates.date2num(ts_xlim),
         xbins=days,
-        plot_type='scatter',
+        plot_type="scatter",
         sort_points=True,
         sigma=(1, 0.5),
         s=1,
@@ -132,167 +156,217 @@ def create_multiplot(times, data, meta, horizon, google_api_key=None, figsize=(2
         x=mdates.date2num(times[is_overcast]),
         y=K[is_overcast],
         ylim=(0.75, 1.25),
-        ax=axes['ts_scatter'][0],
+        ax=axes["ts_scatter"][0],
         ybins=200,
         mincnt=1,
-        **ts_scatter_params)
-    axes['ts_scatter'][0].set_ylabel('K = DHI / GHI [-]')
-    axes['ts_scatter'][0].text(
-        0.02, 0.98, "DNI < 5 W/m²", ha='left', va='top', alpha=0.5,
-        transform=axes['ts_scatter'][0].transAxes)
+        **ts_scatter_params,
+    )
+    axes["ts_scatter"][0].set_ylabel("K = DHI / GHI [-]")
+    axes["ts_scatter"][0].text(
+        0.02,
+        0.98,
+        "DNI < 5 W/m²",
+        ha="left",
+        va="top",
+        alpha=0.5,
+        transform=axes["ts_scatter"][0].transAxes,
+    )
 
     # Closure equation ratio time series scatter plot (all conditions)
     plot_scatter_heatmap(
         x=mdates.date2num(times[is_ghi_above_50]),
-        y=data.loc[is_ghi_above_50, 'ghi'] / data.loc[is_ghi_above_50, 'ghi_calc'],
+        y=data.loc[is_ghi_above_50, "ghi"] / data.loc[is_ghi_above_50, "ghi_calc"],
         ylim=(0.75, 1.25),
-        ax=axes['ts_scatter'][1],
+        ax=axes["ts_scatter"][1],
         ybins=200,
         mincnt=3,
-        **ts_scatter_params)
-    axes['ts_scatter'][1].set_ylabel('GHI / (DHI + DNI·cos(Z)) [-]')
+        **ts_scatter_params,
+    )
+    axes["ts_scatter"][1].set_ylabel("GHI / (DHI + DNI·cos(Z)) [-]")
 
     # Clearsky index time series scatter plot (clearsky conditions)
     plot_scatter_heatmap(
-        x=mdates.date2num(times[data['is_clearsky']]),
-        y=data.loc[data['is_clearsky'], 'ghi'] / data.loc[data['is_clearsky'], 'ghi_clear'],
+        x=mdates.date2num(times[data["is_clearsky"]]),
+        y=data.loc[data["is_clearsky"], "ghi"] / data.loc[data["is_clearsky"], "ghi_clear"],
         ylim=(0.75, 1.25),
-        ax=axes['ts_scatter'][2],
+        ax=axes["ts_scatter"][2],
         ybins=200,
         mincnt=1,
-        **ts_scatter_params)
-    axes['ts_scatter'][2].set_ylabel('Kc = GHI / GHIclear [-]')
-    axes['ts_scatter'][2].text(
-        0.02, 0.98, "Clearsky index calculated using McClear for clearsky conditions",
-        ha='left', va='top', alpha=0.75,
-        transform=axes['ts_scatter'][2].transAxes)
+        **ts_scatter_params,
+    )
+    axes["ts_scatter"][2].set_ylabel("Kc = GHI / GHIclear [-]")
+    axes["ts_scatter"][2].text(
+        0.02,
+        0.98,
+        "Clearsky index calculated using McClear for clearsky conditions",
+        ha="left",
+        va="top",
+        alpha=0.75,
+        transform=axes["ts_scatter"][2].transAxes,
+    )
 
-    for ax in axes['ts_scatter']:
-        ax.axhline(1, linestyle='--', **limit_line_params)
+    for ax in axes["ts_scatter"]:
+        ax.axhline(1, linestyle="--", **limit_line_params)
 
-    fig.align_ylabels(axes['line'] + axes['heatmap'] + axes['ts_scatter'])
+    fig.align_ylabels(axes["line"] + axes["heatmap"] + axes["ts_scatter"])
     # remove xticks
-    [ax.set_xticks([]) for ax in axes['line'] + axes['heatmap'] + axes['ts_scatter']]
-    ts_xticks = pd.date_range(ts_xlim[0], ts_xlim[1], freq='MS')
-    axes['ts_scatter'][2].set_xticks(ts_xticks, ts_xticks.strftime("%b %Y"))
+    [ax.set_xticks([]) for ax in axes["line"] + axes["heatmap"] + axes["ts_scatter"]]
+    ts_xticks = pd.date_range(ts_xlim[0], ts_xlim[1], freq="MS")
+    axes["ts_scatter"][2].set_xticks(ts_xticks, ts_xticks.strftime("%b %Y"))
 
     # Scatter plot settings
     scatter_params = {
-        'cmap': two_part_colormap(),
-        's': 1.5,
-        'xbins': 200,
-        'ybins': 200,
-        'sort_points': True,
+        "cmap": two_part_colormap(),
+        "s": 1.5,
+        "xbins": 200,
+        "ybins": 200,
+        "sort_points": True,
     }
 
     # Irradiance vs. TOA
     discrete_toa = np.linspace(1, 1320)
-    scatter_vmax = {'ghi': 175, 'dni': 50, 'dhi': 250}  # less points for dni
-    for ax, c in zip(axes['mid_l'][:3], components):
+
+    scatter_vmax = {"ghi": 175, "dni": 50, "dhi": 250}  # less points for dni
+    for ax, c in zip(axes["mid_l"][:3], components):
         plot_scatter_heatmap(
-            x=data.loc[is_daytime, 'ghi_extra'],
+            x=data.loc[is_daytime, "ghi_extra"],
             y=data.loc[is_daytime, c],
             ax=ax,
-            xlim=(0, 1400), ylim=(0, 1600),
+            xlim=(0, 1400),
+            ylim=(0, 1600),
             norm=TwoSlopeNorm(vmin=1, vcenter=20, vmax=scatter_vmax[c]),
-            **scatter_params)
+            **scatter_params,
+        )
         # Plot BSRN upper limits for irradiance
-        for limit_type in ['erl', 'ppl']:
+        for limit_type in ["erl", "ppl"]:
             limit = f"{limit_type}-{c}"
-            # TODO: Check implementation if this is truly upper and lower bounds
-            # TODO: ppl-dni does not render correctly
+            # Generate limits for the lowest and highest extraterrestrial irradiance
             low_extra_lim = bsrn_limits(np.rad2deg(np.arccos(discrete_toa / 1320)), 1320, limit)[1]
-            high_extra_lim = bsrn_limits(np.rad2deg(np.arccos(discrete_toa / 1414)), 1414, limit)[1]
-            # Ensure minimum height difference in order to visualize it
-            high_extra_lim = np.max([high_extra_lim, low_extra_lim + 20], axis=0)
-            ax.fill_between(discrete_toa, low_extra_lim, high_extra_lim, facecolor='r', alpha=0.8)
+            high_extra_lim = bsrn_limits(np.rad2deg(np.arccos(discrete_toa / 1414)), 1414, limit)[
+                1
+            ]
+            # Determine which is the lower and upper boundary (switches between components)
+            lower_lim = np.min([low_extra_lim, high_extra_lim], axis=0)
+            upper_lim = np.max(
+                [
+                    low_extra_lim,
+                    high_extra_lim,
+                    # Add a mimium difference (15 W/m^2) for visibility purposes
+                    np.min([low_extra_lim, high_extra_lim], axis=0) + 15,
+                ],
+                axis=0,
+            )
+            ax.fill_between(discrete_toa, lower_lim, upper_lim, facecolor="r", alpha=0.5)
         ax.set_xlabel("Top of atmosphere (TOA) horizontal [W/m²]")
         ax.set_ylabel(f"{c.upper()} [W/m²]")
 
     # Closure test
     plot_scatter_heatmap(
-        x=data.loc[is_daytime, 'ghi'],
-        y=data.loc[is_daytime, 'ghi_calc'],
-        ax=axes['mid_l'][3],
-        xlim=(0, 1400), ylim=(0, 1400),
+        x=data.loc[is_daytime, "ghi"],
+        y=data.loc[is_daytime, "ghi_calc"],
+        ax=axes["mid_l"][3],
+        xlim=(0, 1400),
+        ylim=(0, 1400),
         norm=TwoSlopeNorm(vmin=1, vcenter=20, vmax=175),
-        **scatter_params)
-    axes['mid_l'][3].set_xlabel("GHI [W/m²]")
-    axes['mid_l'][3].set_ylabel("DHI + DNI·cos(Z) [W/m²]")
-    axes['mid_l'][3].plot([0, 1400], [0, 1400*1.08], ls='--', **limit_line_params)
-    axes['mid_l'][3].plot([0, 1400], [0, 1400*0.92], ls='--', **limit_line_params)
-    axes['mid_l'][3].plot([0, 1400], [0, 1400*1.15], ls='-.', **limit_line_params)
-    axes['mid_l'][3].plot([0, 1400], [0, 1400*0.85], ls='-.', **limit_line_params)
+        **scatter_params,
+    )
+    axes["mid_l"][3].set_xlabel("GHI [W/m²]")
+    axes["mid_l"][3].set_ylabel("DHI + DNI·cos(Z) [W/m²]")
+    axes["mid_l"][3].plot([0, 1400], [0, 1400 * 1.08], ls="--", **limit_line_params)
+    axes["mid_l"][3].plot([0, 1400], [0, 1400 * 0.92], ls="--", **limit_line_params)
+    axes["mid_l"][3].plot([0, 1400], [0, 1400 * 1.15], ls="-.", **limit_line_params)
+    axes["mid_l"][3].plot([0, 1400], [0, 1400 * 0.85], ls="-.", **limit_line_params)
 
     # Diffuse fraction (K) vs. zenith
-    ax = axes['mid_r'][0]
+    ax = axes["mid_r"][0]
     plot_scatter_heatmap(
-        x=data['solar_zenith'][is_ghi_above_50],
+        x=data["solar_zenith"][is_ghi_above_50],
         y=K[is_ghi_above_50],
         ax=ax,
-        xlim=(0, 95), ylim=(0, 1.4),
+        xlim=(0, 95),
+        ylim=(0, 1.4),
         norm=TwoSlopeNorm(vmin=1, vcenter=40, vmax=250),
-        **scatter_params)
-    ax.plot([0, 75, 75, 93], [1.05, 1.05, 1.08, 1.08], ls='--', **limit_line_params)
-    ax.set_xlabel('Solar zenith [°]')
-    ax.set_ylabel('K = DHI / GHI [-]')
-    ax.text(0.02, 0.98, "GHI > 50 W/m²", transform=ax.transAxes, ha='left', va='top', alpha=0.5)
+        **scatter_params,
+    )
+    ax.plot([0, 75, 75, 93], [1.05, 1.05, 1.08, 1.08], ls="--", **limit_line_params)
+    ax.set_xlabel("Solar zenith [°]")
+    ax.set_ylabel("K = DHI / GHI [-]")
+    ax.text(0.02, 0.98, "GHI > 50 W/m²", transform=ax.transAxes, ha="left", va="top", alpha=0.5)
 
     # Kn vs. Kt
-    ax = axes['mid_r'][1]
+    ax = axes["mid_r"][1]
     plot_scatter_heatmap(
         x=Kt[is_daytime],
         y=Kn[is_daytime],
         ax=ax,
-        xlim=(0, 1.5), ylim=(0, 1.0),
+        xlim=(0, 1.5),
+        ylim=(0, 1.0),
         norm=TwoSlopeNorm(vmin=1, vcenter=40, vmax=250),
-        **scatter_params)
+        **scatter_params,
+    )
     # TODO: Check these values
-    ax.plot([0, 0.8, 1.3, 1.3], [0, 0.8, 0.8, 0], ls='--', **limit_line_params)
-    ax.set_xlabel('Kt = GHI / TOA / cos(Z) [-]')
-    ax.set_ylabel('Kn = DNI / TOA [-]')
+    ax.plot([0, 0.8, 1.3, 1.3], [0, 0.8, 0.8, 0], ls="--", **limit_line_params)
+    ax.set_xlabel("Kt = GHI / TOA / cos(Z) [-]")
+    ax.set_ylabel("Kn = DNI / TOA [-]")
 
     # K vs. Kt
-    ax = axes['mid_r'][2]
+    ax = axes["mid_r"][2]
     plot_scatter_heatmap(
         x=Kt[is_daytime],
         y=K[is_daytime],
         ax=ax,
-        xlim=(0, 1.5), ylim=(0, 1.5),
+        xlim=(0, 1.5),
+        ylim=(0, 1.5),
         norm=TwoSlopeNorm(vmin=1, vcenter=40, vmax=250),
-        **scatter_params)
+        **scatter_params,
+    )
     # TODO: Check these values
-    ax.plot([0, 0.6, 0.6, 1.3, 1.3], [1.1, 1.1, 1, 1, 0], ls='--', **limit_line_params)
-    ax.set_xlabel('Kt = GHI / TOA / cos(Z) [-]')
-    ax.set_ylabel('K = DHI / GHI [-]')
+    ax.plot([0, 0.6, 0.6, 1.3, 1.3], [1.1, 1.1, 1, 1, 0], ls="--", **limit_line_params)
+    ax.set_xlabel("Kt = GHI / TOA / cos(Z) [-]")
+    ax.set_ylabel("K = DHI / GHI [-]")
 
     # Closure test - ratio
-    ax = axes['mid_r'][3]
+    ax = axes["mid_r"][3]
     plot_scatter_heatmap(
-        x=data.loc[is_ghi_above_50, 'solar_zenith'],
-        y=data.loc[is_ghi_above_50, 'ghi'] / data.loc[is_ghi_above_50, 'ghi_calc'],
+        x=data.loc[is_ghi_above_50, "solar_zenith"],
+        y=data.loc[is_ghi_above_50, "ghi"] / data.loc[is_ghi_above_50, "ghi_calc"],
         ax=ax,
-        xlim=(0, 95), ylim=(0.5, 1.5),
+        xlim=(0, 95),
+        ylim=(0.5, 1.5),
         norm=TwoSlopeNorm(vmin=1, vcenter=40, vmax=250),
-        **scatter_params)
-    ax.plot([0, 75, 75, 93, 93], [1.08, 1.08, 1.15, 1.15, 1], ls='--', **limit_line_params)
-    ax.plot([0, 75, 75, 93, 93], [0.92, 0.92, 0.85, 0.85, 1], ls='--', **limit_line_params)
-    ax.set_xlabel('Solar zenith [°]')
-    ax.set_ylabel('GHI / (DHI + DNI·cos(Z)) [-]')
-    ax.text(0.02, 0.98, "GHI > 50 W/m²", transform=ax.transAxes, ha='left', va='top', alpha=0.5)
+        **scatter_params,
+    )
+    ax.plot([0, 75, 75, 93, 93], [1.08, 1.08, 1.15, 1.15, 1], ls="--", **limit_line_params)
+    ax.plot([0, 75, 75, 93, 93], [0.92, 0.92, 0.85, 0.85, 1], ls="--", **limit_line_params)
+    ax.set_xlabel("Solar zenith [°]")
+    ax.set_ylabel("GHI / (DHI + DNI·cos(Z)) [-]")
+    ax.text(0.02, 0.98, "GHI > 50 W/m²", transform=ax.transAxes, ha="left", va="top", alpha=0.5)
 
     # Maps
     if google_api_key is not None:
-        for ax, zoom in zip(axes['maps'], [3, 16, 20]):
-            map_type = 'satellite' if zoom > 5 else 'hybrid'
+        for ax, zoom in zip(axes["maps"], [3, 16, 20]):
+            map_type = "satellite" if zoom > 5 else "hybrid"
             plot_google_maps(
-                meta['latitude'], meta['longitude'], api_key=google_api_key,
-                zoom=zoom, map_type=map_type, ax=ax, size=(400, 400))
+                meta["latitude"],
+                meta["longitude"],
+                api_key=google_api_key,
+                zoom=zoom,
+                map_type=map_type,
+                ax=ax,
+                size=(400, 400),
+            )
     # Make the maps wider
     maps_delta = 0.08
-    for ax in axes['maps']:
+    for ax in axes["maps"]:
         pos = ax.get_position()
-        ax.set_position([pos.x0 - maps_delta/3, pos.y0 - maps_delta/3 + 0.018, pos.width + maps_delta*2/3, pos.height + maps_delta*2/3])
+        ax.set_position(
+            [
+                pos.x0 - maps_delta / 3,
+                pos.y0 - maps_delta / 3 + 0.018,
+                pos.width + maps_delta * 2 / 3,
+                pos.height + maps_delta * 2 / 3,
+            ]
+        )
 
     # Metadata text
     meta_text = {
@@ -300,49 +374,74 @@ def create_multiplot(times, data, meta, horizon, google_api_key=None, figsize=(2
         "Country": meta.get("country", "N/A"),
         "Latitude": f"{meta['latitude']:.4f} °N",
         "Longitude": f"{meta['longitude']:.4f} °E",
-        "Altitude": f"{meta['altitude']:.0f} m" if meta.get('altitude') is not None else "N/A",
-        "Climate (KG)": meta.get('climate', 'N/A'),
+        "Altitude": f"{meta['altitude']:.0f} m" if meta.get("altitude") is not None else "N/A",
+        "Climate (KG)": meta.get("climate", "N/A"),
     }
     for ii, (k, v) in enumerate(meta_text.items()):
-        axes['meta'].text(0.02, 0.98 - ii * 0.18, f"{k}: {v}", va='top', ha='left', transform=axes['meta'].transAxes)
-    axes['meta'].axis('off')
+        axes["meta"].text(
+            0.02,
+            0.98 - ii * 0.18,
+            f"{k}: {v}",
+            va="top",
+            ha="left",
+            transform=axes["meta"].transAxes,
+        )
+    axes["meta"].axis("off")
 
     # Statistics text
     min_date, max_date = min(times).date(), max(times).date()
-    dt_hours = np.median(np.diff(times.astype('int64'))) / 3.6e12
+    dt_hours = np.median(np.diff(times.astype("int64"))) / 3.6e12
     period_text = f"Period: {min_date.strftime('%Y-%m-%d')} to {max_date.strftime('%Y-%m-%d')}  (days: {days})"
-    axes['meta'].text(0.4, 0.98, period_text, va='top', ha='left', transform=axes['meta'].transAxes)
-    axes['meta'].text(0.4, 0.62, "Annual equivalent sums ↓", va='top', ha='left', transform=axes['meta'].transAxes)
+    axes["meta"].text(
+        0.4, 0.98, period_text, va="top", ha="left", transform=axes["meta"].transAxes
+    )
+    axes["meta"].text(
+        0.4,
+        0.62,
+        "Annual equivalent sums ↓",
+        va="top",
+        ha="left",
+        transform=axes["meta"].transAxes,
+    )
     for ii, c in enumerate(components):
         s = f"{np.nansum(data[c]) * dt_hours / 1000:>4.0f} kWh/m²  ({np.mean(np.isnan(data[c]))*100:1.1f}% missing)"
-        axes['meta'].text(0.4, 0.44 - ii * 0.18, f"{c.upper()}: {s}", family="monospace",
-                          va='top', ha='left', transform=axes['meta'].transAxes)
+        axes["meta"].text(
+            0.4,
+            0.44 - ii * 0.18,
+            f"{c.upper()}: {s}",
+            family="monospace",
+            va="top",
+            ha="left",
+            transform=axes["meta"].transAxes,
+        )
 
     # Histograms
     threshold = 5
-    ghi_threshold = data['ghi'] > threshold
-    dni_threshold = data['dni'] > threshold
-    dhi_threshold = data['dhi'] > threshold
+    ghi_threshold = data["ghi"] > threshold
+    dni_threshold = data["dni"] > threshold
+    dhi_threshold = data["dhi"] > threshold
     hist_params = dict(range=(0, 1.2), bins=60)
-    axes['hist'][0].hist(Kt[ghi_threshold].dropna(), color='r', **hist_params)
-    axes['hist'][0].hist(Kt[ghi_threshold & ~data['flag']].dropna(), color='C0', **hist_params)
-    axes['hist'][1].hist(Kn[dni_threshold].dropna(), color='r', **hist_params)
-    axes['hist'][1].hist(Kn[dni_threshold & ~data['flag']].dropna(), color='C0', **hist_params)
-    axes['hist'][2].hist(Kd[dhi_threshold].dropna(), color='r', **hist_params, label='True')
-    axes['hist'][2].hist(Kd[dhi_threshold & ~data['flag']].dropna(), color='C0', **hist_params, label='False')
-    axes['hist'][0].set_xlabel('Kt = GHI / TOA / cos(Z) [-]')
-    axes['hist'][1].set_xlabel('Kn = DNI / TOA [-]')
-    axes['hist'][2].set_xlabel('Kd = DHI / TOA / cos(Z) [-]')
-    axes['hist'][0].set_ylabel('count (> 5 W/m²)')
-    if (~data['flag']).any():  # only plot legend if flag is not all False
-        axes['hist'][2].legend(title='Flagged data')
-    hist_max_ylim = max([axes['hist'][i].get_ylim()[1] for i in range(3)])
-    for ax in axes['hist']:
-        ax.spines[['top', 'right']].set_visible(False)
-        ax.set_xlim(hist_params['range'])
+    axes["hist"][0].hist(Kt[ghi_threshold].dropna(), color="r", **hist_params)
+    axes["hist"][0].hist(Kt[ghi_threshold & ~data["flag"]].dropna(), color="C0", **hist_params)
+    axes["hist"][1].hist(Kn[dni_threshold].dropna(), color="r", **hist_params)
+    axes["hist"][1].hist(Kn[dni_threshold & ~data["flag"]].dropna(), color="C0", **hist_params)
+    axes["hist"][2].hist(Kd[dhi_threshold].dropna(), color="r", **hist_params, label="True")
+    axes["hist"][2].hist(
+        Kd[dhi_threshold & ~data["flag"]].dropna(), color="C0", **hist_params, label="False"
+    )
+    axes["hist"][0].set_xlabel("Kt = GHI / TOA / cos(Z) [-]")
+    axes["hist"][1].set_xlabel("Kn = DNI / TOA [-]")
+    axes["hist"][2].set_xlabel("Kd = DHI / TOA / cos(Z) [-]")
+    axes["hist"][0].set_ylabel("count (> 5 W/m²)")
+    if (~data["flag"]).any():  # only plot legend if flag is not all False
+        axes["hist"][2].legend(title="Flagged data")
+    hist_max_ylim = max([axes["hist"][i].get_ylim()[1] for i in range(3)])
+    for ax in axes["hist"]:
+        ax.spines[["top", "right"]].set_visible(False)
+        ax.set_xlim(hist_params["range"])
         ax.set_ylim(0, hist_max_ylim)
         ax.set_xticks([0, 0.5, 1.0], minor=False)
-        ax.set_xticks(np.arange(0, 1.2+0.01, 0.1), minor=True)
+        ax.set_xticks(np.arange(0, 1.2 + 0.01, 0.1), minor=True)
         ax.set_yticks([])
         # Shrink height to make room for xlabels
         pos = ax.get_position()
@@ -357,21 +456,24 @@ def create_multiplot(times, data, meta, horizon, google_api_key=None, figsize=(2
     # )
 
     # Plot shading plots
-    shading_clabels = ['Kt = GHI / TOA / cos(Z) [-]', 'Kn = DNI / TOA [-]']
-    for value, clabel, ax in zip([Kt, Kn], shading_clabels, (axes['sun1'], axes['sun2'])):
+    shading_clabels = ["Kt = GHI / TOA / cos(Z) [-]", "Kn = DNI / TOA [-]"]
+    for value, clabel, ax in zip([Kt, Kn], shading_clabels, (axes["sun1"], axes["sun2"])):
         mask = value < 1
         # TODO: Make a better filtering
         plot_shading_heatmap(
-            value=value[mask], solar_azimuth=data['solar_azimuth'][mask],
-            solar_elevation=90 - data['solar_zenith'][mask],
-            ax=ax, colorbar_label=clabel,
-            northern_hemisphere=meta['latitude'] > 0)
-        ax.plot(horizon.index, horizon, c='r', label='Horizon line')
-    axes['sun1'].set_xticks([])
-    axes['sun1'].legend(loc='upper right', frameon=False)
-    axes['sun1'].set_xlabel(None)
+            value=value[mask],
+            solar_azimuth=data["solar_azimuth"][mask],
+            solar_elevation=90 - data["solar_zenith"][mask],
+            ax=ax,
+            colorbar_label=clabel,
+            northern_hemisphere=meta["latitude"] > 0,
+        )
+        ax.plot(horizon.index, horizon, c="r", label="Horizon line")
+    axes["sun1"].set_xticks([])
+    axes["sun1"].legend(loc="upper right", frameon=False)
+    axes["sun1"].set_xlabel(None)
 
     return fig, axes
 
+
 # TODO: Add text describing flags
-# TODO: Add BSRN limits in irradiance vs. TOA plots
