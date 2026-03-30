@@ -109,7 +109,7 @@ def _multiplot_layout(figsize=(24, 16)):
     return fig, axes
 
 
-def multiplot(times, data, meta, horizon, google_api_key=None, figsize=(24, 16)):
+def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24, 16)):
     """Create a multiplot for visual checking plausibility of irradiance data.
 
     Produces a multi-panel figure combining time series, intraday heatmaps,
@@ -147,10 +147,10 @@ def multiplot(times, data, meta, horizon, google_api_key=None, figsize=(24, 16))
         Station metadata. Required keys: ``"latitude"``, ``"longitude"``.
         Optional keys: ``"altitude"``, ``"name"``, ``"country"``,
         ``"climate"``.
-    horizon : pandas.Series
+    horizon : pandas.Series, optional
         Horizon elevation profile indexed by azimuth angle [°]. Overlaid
         on the sun-path shading plots. See
-        :py:func:` solarpy.horizon.get_horizon_mines`.
+        :py:func:`solarpy.horizon.get_horizon_mines`.
     google_api_key : str, optional
         Google Maps Static API key. If not specified, the map panels are
         replaced with a placeholder message.
@@ -264,6 +264,15 @@ def multiplot(times, data, meta, horizon, google_api_key=None, figsize=(24, 16))
         mincnt=3,
         **ts_scatter_params,
     )
+    axes["ts_scatter"][1].text(
+        0.02,
+        0.98,
+        "GHI > 50 W/m²",
+        ha="left",
+        va="top",
+        alpha=0.5,
+        transform=axes["ts_scatter"][1].transAxes,
+    )
     axes["ts_scatter"][1].set_ylabel("GHI / (DHI + DNI·cos(Z)) [-]")
 
     # Clearsky index time series scatter plot (clearsky conditions)
@@ -351,21 +360,22 @@ def multiplot(times, data, meta, horizon, google_api_key=None, figsize=(24, 16))
     # Closure test
     plot_scatter_heatmap(
         x=data.loc[is_daytime, "ghi"],
-        y=ghi_calc[is_daytime],
+        y=ghi_calc[is_daytime] - data.loc[is_daytime, "ghi"],
         ax=axes["mid_l"][3],
         xlim=(0, 1400),
-        ylim=(0, 1400),
+        ylim=(-200, 200),
         norm=TwoSlopeNorm(vmin=1, vcenter=20, vmax=175),
         **scatter_params,
     )
     axes["mid_l"][3].set_xlabel("GHI [W/m²]")
-    axes["mid_l"][3].set_ylabel("DHI + DNI·cos(Z) [W/m²]")
-    axes["mid_l"][3].plot([0, 1400], [0, 1400 * 1.08], ls="--", **limit_line_params)
-    axes["mid_l"][3].plot([0, 1400], [0, 1400 * 0.92], ls="--", **limit_line_params)
-    axes["mid_l"][3].plot([0, 1400], [0, 1400 * 1.15], ls="-.", **limit_line_params)
-    axes["mid_l"][3].plot([0, 1400], [0, 1400 * 0.85], ls="-.", **limit_line_params)
+    axes["mid_l"][3].set_ylabel("DHI + DNI·cos(Z) - GHI [W/m²]")
+    x_limits = np.array([50, 1400])
+    axes["mid_l"][3].plot(x_limits, +0.08 * x_limits, ls="--", **limit_line_params)
+    axes["mid_l"][3].plot(x_limits, -0.08 * x_limits, ls="--", **limit_line_params)
+    axes["mid_l"][3].plot(x_limits, +0.15 * x_limits, ls="-.", **limit_line_params)
+    axes["mid_l"][3].plot(x_limits, -0.15 * x_limits, ls="-.", **limit_line_params)
 
-    # Diffuse fraction (K) vs. zenith
+    # K vs. zenith
     ax = axes["mid_r"][0]
     plot_scatter_heatmap(
         x=data["solar_zenith"][is_ghi_above_50],
@@ -416,13 +426,22 @@ def multiplot(times, data, meta, horizon, google_api_key=None, figsize=(24, 16))
     # K vs. Kt
     ax = axes["mid_r"][2]
     plot_scatter_heatmap(
-        x=Kt[is_daytime],
-        y=K[is_daytime],
+        x=Kt[is_ghi_above_50],
+        y=K[is_ghi_above_50],
         ax=ax,
         xlim=(0, 1.5),
         ylim=(0, 1.5),
         norm=TwoSlopeNorm(vmin=1, vcenter=40, vmax=250),
         **scatter_params,
+    )
+    ax.text(
+        0.02,
+        0.98,
+        "GHI > 50 W/m²",
+        transform=ax.transAxes,
+        ha="left",
+        va="top",
+        alpha=0.5,
     )
     # K <= 0.96 for Kt > 0.6 from (Geuder et al. 2015): 10.1016/j.egypro.2015.03.205
     ax.plot(
@@ -612,7 +631,8 @@ def multiplot(times, data, meta, horizon, google_api_key=None, figsize=(24, 16))
             colorbar_label=clabel,
             northern_hemisphere=meta["latitude"] > 0,
         )
-        ax.plot(horizon.index, horizon, c="r", label="Horizon line")
+        if horizon is not None:
+            ax.plot(horizon.index, horizon, c="r", label="Horizon line")
     axes["sun1"].set_xticks([])
     axes["sun1"].legend(loc="upper right", frameon=False)
     axes["sun1"].set_xlabel(None)
