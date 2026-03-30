@@ -247,7 +247,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     axes["ts_scatter"][0].text(
         0.02,
         0.98,
-        "DNI < 5 W/m²",
+        "DNI < 5 W/m² & GHI > 50 W/m²",
         ha="left",
         va="top",
         alpha=0.5,
@@ -300,12 +300,16 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
 
     for ax in axes["ts_scatter"]:
         ax.axhline(1, linestyle="--", **limit_line_params)
+        ax.set_xlim(ts_xlim)
 
     fig.align_ylabels(axes["line"] + axes["heatmap"] + axes["ts_scatter"])
-    # remove xticks
+    # Remove xticks for time series plots
     [ax.set_xticks([]) for ax in axes["line"] + axes["heatmap"] + axes["ts_scatter"]]
     ts_xticks = pd.date_range(ts_xlim[0], ts_xlim[1], freq="MS")
-    axes["ts_scatter"][2].set_xticks(ts_xticks, ts_xticks.strftime("%b %Y"))
+    # Set xticks for the bottom time series plot
+    axes["ts_scatter"][2].set_xticks(
+        ts_xticks, ts_xticks.strftime("%b %Y"), ha="right", rotation=30
+    )
 
     # Scatter plot settings
     scatter_params = {
