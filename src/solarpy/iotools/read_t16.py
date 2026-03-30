@@ -53,6 +53,8 @@ def read_t16(filename, drop_dates=False, map_variables=False,
             for mk in meta.keys():
                 if mk in line:
                     meta[mk] = line.replace(mk, '').replace(',', '').strip()
+                    # Fix issue in older files
+                    meta[mk] = meta[mk].replace('longitude deg N', 'longitude deg E')
 
         for k in ['latitude deg N', 'longitude deg E', 'altitude in m amsl',
                   'timezone offset from UTC in hours']:

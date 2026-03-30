@@ -188,7 +188,7 @@ def plot_shading_heatmap(
     ax.set_xlabel("Solar azimuth [°]")
 
     el_tick_step = 5 if (el_max - el_min) <= 45 else 10
-    el_ticks = np.arange(0, el_max + 1, el_tick_step)
+    el_ticks = np.arange(0, np.ceil(el_max/el_tick_step)*el_tick_step+1, el_tick_step)
     ax.set_yticks(el_ticks)
     ax.set_ylim(0, el_ticks[-1])
     ax.set_ylabel("Solar elevation [°]")
