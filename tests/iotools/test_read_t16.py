@@ -48,11 +48,11 @@ def test_first_timestamp(data):
 
 
 def test_last_timestamp(data):
-    assert data.index[-1] == pd.Timestamp("2023-12-31 23:59", tz="UTC")
+    assert data.index[-1] == pd.Timestamp("2023-01-01 01:59", tz="UTC")
 
 
 def test_row_count(data):
-    assert len(data) == 365 * 24 * 60
+    assert len(data) == 2 * 60
 
 
 def test_meta(meta):

@@ -61,7 +61,7 @@ def write_t16(filename, data, meta, lines=None, missing=None, encoding="utf-8"):
         f.write(f"# altitude in m amsl {altitude}\n")
         f.write("# \n")
         f.write(
-            "# time stamp (Year Month Day Hour Minute) is in UTC and refers to the end of the period\n"
+            "# time stamp (Year Month Day Hour Minute) is in UTC and refers to the end of the period\n"  # noqa: E501
         )
         f.write(
             f"# missing data points in GHI DNI and DIF are noted as {missing_ref}\n"

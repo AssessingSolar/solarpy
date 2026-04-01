@@ -38,7 +38,7 @@ LINES_DATA_FILE = [
     "Azim is the solar azimuth angle in deg N",
     "Kc is the clearsky index calculated with CAMS mcclear with GHIcalc/GHI McClear",
     "usable is the validity of a data point with 1 being valid and 0 being not usable",
-    "flag values from various tests: 1 means the data failed the test. 0 means the test was passed. -999 means the test domain was not met",
+    "flag values from various tests: 1 means the data failed the test. 0 means the test was passed.",  # noqa: E501
 ]
 
 

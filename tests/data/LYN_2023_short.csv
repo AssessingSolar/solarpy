@@ -13,7 +13,7 @@
 # Azim is the solar azimuth angle in deg N
 # Kc is the clearsky index calculated with CAMS mcclear with GHIcalc/GHI McClear
 # usable is the validity of a data point with 1 being valid and 0 being not usable
-# flag values from various tests: 1 means the data failed the test. 0 means the test was passed. -999 means the test domain was not met
+# flag values from various tests: 1 means the data failed the test. 0 means the test was passed.
 Year,Month,Day,Hour,Minute,GHI,DNI,DIF,GHIcalc,Elev,Azim,Kc,usable,flagPPLDIF,flagERLDIF,flagPPLDNI,flagERLDNI,flagPPLGHI,flagERLGHI,flag3highSZA,flag3lowSZA,flagKt,flagKKt,flagKn,flagKnKt,flagKhighSZA,flagKlowSZA,flagTracker,flagManual
 2023,1,1,0,0,-0.1224,-0.06081,-0.16,,,,,,,,,,,,,,,,,,,,,
 2023,1,1,0,1,-0.1176,-0.04698,-0.1671,,,,,,,,,,,,,,,,,,,,,
