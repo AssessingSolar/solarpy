@@ -5,7 +5,7 @@ import pytest
 
 import solarpy
 
-DATA_FILE = pathlib.Path(__file__).parents[2] / "data" / "LYN_2023.csv"
+DATA_FILE = pathlib.Path(__file__).parents[1] / "data" / "LYN_2023_short.csv"
 
 
 @pytest.fixture(scope="module")
@@ -101,11 +101,11 @@ def test_map_variables():
 
 def test_empty_stationcode_returns_none(tmp_path):
     content = (
-        "# stationcode ,\n"
-        "# latitude deg N 55.0,\n"
-        "# longitude deg E 12.0,\n"
-        "# altitude in m amsl 40,\n"
-        "# timezone offset from UTC in hours 0,\n"
+        "# stationcode \n"
+        "# latitude deg N 55.0\n"
+        "# longitude deg E 12.0\n"
+        "# altitude in m amsl 40\n"
+        "#\n"
         "Year,Month,Day,Hour,Minute,GHI\n"
         "2023,1,1,0,0,100.0\n"
     )

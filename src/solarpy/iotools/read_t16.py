@@ -1,6 +1,18 @@
 import numpy as np
 import pandas as pd
 
+VARIABLE_MAP = {
+    "GHI": "ghi",
+    "DIF": "dhi",
+    "DNI": "dni",
+    "GHI_clear": "ghi_clear",
+    "DIF_clear": "dhi_clear",
+    "DNI_clear": "dni_clear",
+    "BHI_clear": "bhi_clear",
+    "GHI_extra": "ghi_extra",
+    "DNI_extra": "dni_extra",
+}
+
 
 def read_t16(filename, drop_dates=False, map_variables=False, encoding="utf-8"):
     """
@@ -86,6 +98,6 @@ def read_t16(filename, drop_dates=False, map_variables=False, encoding="utf-8"):
         meta["latitude"] = meta.pop("latitude deg N")
         meta["longitude"] = meta.pop("longitude deg E")
         meta["altitude"] = meta.pop("altitude in m amsl")
-        data = data.rename(columns={"GHI": "ghi", "DIF": "dhi", "DNI": "dni"})
+        data = data.rename(columns=VARIABLE_MAP)
 
     return data, meta

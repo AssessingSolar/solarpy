@@ -59,7 +59,7 @@ def write_t16(filename, data, meta, lines=None, missing=None, encoding="utf-8"):
         f.write(f"# latitude deg N {latitude}\n")
         f.write(f"# longitude deg E {longitude}\n")
         f.write(f"# altitude in m amsl {altitude}\n")
-        f.write("#\n")
+        f.write("# \n")
         f.write(
             "# time stamp (Year Month Day Hour Minute) is in UTC and refers to the end of the period\n"
         )
@@ -69,4 +69,4 @@ def write_t16(filename, data, meta, lines=None, missing=None, encoding="utf-8"):
         for line in lines or []:
             f.write(f"# {line}\n")
         na_rep = "" if missing is None else missing
-        out.to_csv(f, index=False, na_rep=na_rep)
+        out.to_csv(f, index=False, na_rep=na_rep, lineterminator="\n")
