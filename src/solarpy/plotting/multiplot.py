@@ -634,7 +634,8 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         if horizon is not None:
             ax.plot(horizon.index, horizon, c="r", label="Horizon line")
     axes["sun1"].set_xticks([])
-    axes["sun1"].legend(loc="upper right", frameon=False)
     axes["sun1"].set_xlabel(None)
+    if horizon is not None:
+        axes["sun1"].legend(loc="upper right", frameon=False)
 
     return fig, axes
