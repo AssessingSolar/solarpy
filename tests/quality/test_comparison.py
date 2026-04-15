@@ -71,16 +71,14 @@ def test_ghi_zero_no_warning():
 
 def test_check_low_zenith_ignores_high_zenith_violation():
     dhi = GHI * 1.11  # K > 1.10, violation in high-zenith
-    assert (
-        diffuse_fraction_flag(GHI, dhi, SZA_HIGH, check="low-zenith") == False
-    )  # noqa: E712
+    flag = diffuse_fraction_flag(GHI, dhi, SZA_HIGH, check="low-zenith")
+    assert flag == False  # noqa: E712
 
 
 def test_check_high_zenith_ignores_low_zenith_violation():
     dhi = GHI * 1.06  # K >= 1.05, violation in low-zenith
-    assert (
-        diffuse_fraction_flag(GHI, dhi, SZA_LOW, check="high-zenith") == False
-    )  # noqa: E712
+    flag = diffuse_fraction_flag(GHI, dhi, SZA_LOW, check="high-zenith")
+    assert flag == False  # noqa: E712
 
 
 def test_check_invalid_raises():
@@ -118,15 +116,13 @@ def test_nan_dhi_not_flagged_by_default():
 
 
 def test_nan_ghi_flagged_when_nan_flag_true():
-    assert (
-        diffuse_fraction_flag(np.nan, GHI, SZA_LOW, nan_flag=True) == True
-    )  # noqa: E712
+    flag = diffuse_fraction_flag(np.nan, GHI, SZA_LOW, nan_flag=True)
+    assert flag == True  # noqa: E712
 
 
 def test_nan_dhi_flagged_when_nan_flag_true():
-    assert (
-        diffuse_fraction_flag(GHI, float("nan"), SZA_LOW, nan_flag=True) == True
-    )  # noqa: E712
+    flag = diffuse_fraction_flag(GHI, float("nan"), SZA_LOW, nan_flag=True)
+    assert flag == True  # noqa: E712
 
 
 # --- array inputs ---
