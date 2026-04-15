@@ -17,6 +17,7 @@ Code documentation
    horizon.get_horizon_mines
    quality.bsrn_limits
    quality.bsrn_limits_flag
+   quality.diffuse_fraction_flag
    iotools.read_t16
    iotools.write_t16
    processing.resample_to_freq
