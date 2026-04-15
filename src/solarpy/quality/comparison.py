@@ -3,8 +3,9 @@
 import numpy as np
 
 
-def diffuse_fraction_flag(ghi, dhi, solar_zenith, *, check='both',
-                          outside_domain_flag=False, nan_flag=False):
+def diffuse_fraction_flag(
+    ghi, dhi, solar_zenith, *, check="both", outside_domain_flag=False, nan_flag=False
+):
     """Flag measurements where the diffuse fraction exceeds physically plausible limits.
 
     The diffuse fraction K = DHI / GHI is tested against solar-zenith-dependent
@@ -25,7 +26,7 @@ def diffuse_fraction_flag(ghi, dhi, solar_zenith, *, check='both',
     solar_zenith : array-like of float
         Solar zenith angle [degrees].
     check : {'high-zenith', 'low-zenith', 'both'}, optional
-        Which solar zenith angle domains to check. Default is ``'both'``.
+        Which solar zenith angle domain to check. Default is ``'both'``.
     outside_domain_flag : bool, optional
         Value to assign to the flag when conditions are outside the
         valid test boundary. Can be either ``True`` or ``False``.
@@ -43,7 +44,7 @@ def diffuse_fraction_flag(ghi, dhi, solar_zenith, *, check='both',
 
     See Also
     --------
-    bsrn_limits_flag : Test irradiance values against BSRN upper/lower limits.
+    bsrn_limits_flag
 
     References
     ----------
@@ -56,30 +57,29 @@ def diffuse_fraction_flag(ghi, dhi, solar_zenith, *, check='both',
        <https://bsrn.awi.de/fileadmin/user_upload/bsrn.awi.de/Publications/BSRN_recommended_QC_tests_V2.pdf>`_
     """
     # Suppress divide-by-zero warning
-    with np.errstate(divide='ignore', invalid='ignore'):
+    with np.errstate(divide="ignore", invalid="ignore"):
         K = dhi / ghi
-# TODO: Add option to also test for (dhi > 50) | (ghi > 50)
+    # TODO: Consideer adding option to also test for (dhi > 50) | (ghi > 50)
     is_ghi_50 = ghi > 50
-    # previous code used:
-    # is_within_domain = data['GHIcalc'] > 50
+
     is_low_zenith = solar_zenith < 75
     is_high_zenith = (solar_zenith >= 75) & (solar_zenith < 93)
 
-    if check == 'high-zenith':
+    if check == "high-zenith":
         flag = is_ghi_50 & is_high_zenith & (K >= 1.10)
-        outside_domain = ~(is_ghi_50 & is_high_zenith)
-    elif check == 'low-zenith':
+        outside_domain = np.logical_not(is_ghi_50 & is_high_zenith)
+    elif check == "low-zenith":
         flag = is_ghi_50 & is_low_zenith & (K >= 1.05)
-        outside_domain = ~(is_ghi_50 & is_low_zenith)
-    elif check == 'both':
-        flag = (
-            (is_ghi_50 & is_low_zenith & (K >= 1.05)) |
-            (is_ghi_50 & is_high_zenith & (K >= 1.10))
+        outside_domain = np.logical_not(is_ghi_50 & is_low_zenith)
+    elif check == "both":
+        flag = is_ghi_50 & (is_low_zenith & (K >= 1.05)) | (
+            is_high_zenith & (K >= 1.10)
         )
-        outside_domain = ~(is_ghi_50 & (is_low_zenith | is_high_zenith))
+        outside_domain = np.logical_not(is_ghi_50 & (is_low_zenith | is_high_zenith))
     else:
         raise ValueError(
-            f"check must be 'both', 'low-zenith', or 'high-zenith', got '{check}'.")
+            f"check must be 'both', 'low-zenith', or 'high-zenith', got '{check}'."
+        )
 
     if outside_domain_flag:
         flag = flag | outside_domain
