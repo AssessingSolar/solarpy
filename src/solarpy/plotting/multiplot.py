@@ -497,7 +497,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         axes["maps"][1].text(
             0.5,
             0.5,
-            "Maps not shown.\nGoogle API was not provided.",
+            "Maps not shown.\nA Google API key was not provided.",
             ha="center",
             va="center",
             color="grey",
