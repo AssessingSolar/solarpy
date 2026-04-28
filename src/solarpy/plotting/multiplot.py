@@ -12,7 +12,7 @@ from solarpy.plotting import (
 )
 from solarpy.quality import bsrn_limits
 import matplotlib.dates as mdates
-from matplotlib.colors import TwoSlopeNorm
+from matplotlib.colors import TwoSlopeNorm, Normalize
 import pandas as pd
 import pvlib
 
@@ -628,8 +628,8 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
             solar_azimuth=data["solar_azimuth"][mask],
             solar_elevation=90 - data["solar_zenith"][mask],
             ax=ax,
-            cmap=two_part_colormap(),
-            norm=TwoSlopeNorm(vmin=0, vcenter=0.05, vmax=0.7),
+            cmap="viridis",
+            norm=Normalize(vmin=0, vmax=0.7),
             colorbar_label=clabel,
             northern_hemisphere=meta["latitude"] > 0,
         )
