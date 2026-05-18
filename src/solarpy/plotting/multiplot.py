@@ -306,6 +306,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     [ax.set_xticks([]) for ax in axes["line"] + axes["heatmap"] + axes["ts_scatter"]]
     ts_xticks = pd.date_range(ts_xlim[0], ts_xlim[1], freq="MS")
     axes["ts_scatter"][2].set_xticks(ts_xticks, ts_xticks.strftime("%b %Y"), rotation=30)
+    axes["ts_scatter"][2].set_xlim(ts_xlim)
 
     # Scatter plot settings
     scatter_params = {
