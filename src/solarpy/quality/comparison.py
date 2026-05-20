@@ -1,4 +1,4 @@
-"""Functions for component comparison quality control tests of irradiance measurements."""
+"""Functions for component comparison quality tests of irradiance measurements."""
 
 import numpy as np
 
@@ -165,15 +165,15 @@ def closure_flag(
     is_high_zenith = (solar_zenith >= 75) & (solar_zenith < 93)
 
     if check == "high-zenith":
-        flag = is_sum_50 & is_high_zenith & (np.abs(R - 1.0) > 0.15)
+        flag = is_sum_50 & is_high_zenith & (np.abs(R - 1.0) >= 0.15)
         outside_domain = np.logical_not(is_sum_50 & is_high_zenith)
     elif check == "low-zenith":
-        flag = is_sum_50 & is_low_zenith & (np.abs(R - 1.0) > 0.08)
+        flag = is_sum_50 & is_low_zenith & (np.abs(R - 1.0) >= 0.08)
         outside_domain = np.logical_not(is_sum_50 & is_low_zenith)
     elif check == "both":
         flag = is_sum_50 & (
-            (is_low_zenith & (np.abs(R - 1.0) > 0.08))
-            | (is_high_zenith & (np.abs(R - 1.0) > 0.15))
+            (is_low_zenith & (np.abs(R - 1.0) >= 0.08))
+            | (is_high_zenith & (np.abs(R - 1.0) >= 0.15))
         )
         outside_domain = np.logical_not(is_sum_50 & (is_low_zenith | is_high_zenith))
     else:
