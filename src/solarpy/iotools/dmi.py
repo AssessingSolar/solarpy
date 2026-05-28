@@ -58,10 +58,18 @@ def _format_datetime_interval(start, end) -> str:
     )
 
 
+def _raise_for_status(res):
+    # Custom raise for status function which correctly returns error message
+    try:
+        res.raise_for_status()
+    except requests.HTTPError as e:
+        raise requests.HTTPError(f"{e} | Response body: {res.text}") from e
+
+
 def _fetch_station_meta(station_id: str, url: str, **kwargs) -> dict:
     params: dict = {"stationId": station_id}
     res = requests.get(url + "collections/station/items", params=params, **kwargs)
-    res.raise_for_status()
+    _raise_for_status(res)
     body = res.json()
 
     meta: dict = {
@@ -110,7 +118,7 @@ def _fetch_parameter(
     while True:
         params["offset"] = offset
         res = requests.get(endpoint, params=params, **kwargs)
-        res.raise_for_status()
+        _raise_for_status(res)
         body = res.json()
         for feat in body.get("features", []):
             props = feat["properties"]
