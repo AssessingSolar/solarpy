@@ -8,12 +8,37 @@ LIMIT = 300_000
 
 # Maps DMI parameter IDs to pvlib/solarpy standard variable names.
 VARIABLE_MAP = {
-    "radia_glob": "ghi",
+    "mean_radiation": "ghi",
     "mean_temp": "temp_air",
     "mean_wind_speed": "wind_speed",
     "mean_wind_dir": "wind_direction",
     "mean_relative_hum": "relative_humidity",
     "mean_pressure": "pressure",
+}
+
+# Maps pandas frequency aliases to DMI timeResolution values.
+# Covers both current aliases (pandas >= 2.2) and deprecated ones.
+TIME_STEP_MAP = {
+    # Hourly
+    "h": "hour",
+    "1h": "hour",
+    # Daily
+    "D": "day",
+    "d": "day",
+    "1D": "day",
+    "1d": "day",
+    # Monthly
+    "ME": "month",  # month end, pandas >= 2.2
+    "MS": "month",  # month start
+    "1ME": "month",
+    "1MS": "month",
+    # Yearly
+    "YE": "year",  # year end, pandas >= 2.2
+    "YS": "year",  # year start
+    "y": "year",
+    "1YE": "year",
+    "1YS": "year",
+    "1y": "year",
 }
 
 
@@ -33,12 +58,8 @@ def _format_datetime_interval(start, end) -> str:
     )
 
 
-def _fetch_station_meta(
-    station_id: str, url: str, api_key: str | None, **kwargs
-) -> dict:
+def _fetch_station_meta(station_id: str, url: str, **kwargs) -> dict:
     params: dict = {"stationId": station_id}
-    if api_key is not None:
-        params["api-key"] = api_key
     res = requests.get(url + "collections/station/items", params=params, **kwargs)
     res.raise_for_status()
     body = res.json()
@@ -70,7 +91,6 @@ def _fetch_parameter(
     parameter_id: str | None,
     time_resolution: str,
     url: str,
-    api_key: str | None,
     **kwargs,
 ) -> list[dict]:
     """Fetch all pages for a single parameter (or all parameters if None)."""
@@ -80,10 +100,8 @@ def _fetch_parameter(
         "timeResolution": time_resolution,
         "limit": LIMIT,
     }
-    if parameter_id is not None:
+    if parameter_id != [None]:
         params["parameterId"] = parameter_id
-    if api_key is not None:
-        params["api-key"] = api_key
 
     endpoint = url + "collections/stationValue/items"
     records: list[dict] = []
@@ -116,13 +134,12 @@ def get_dmi_climate_data(
     end,
     parameters: str | list[str] | None = None,
     time_resolution: str = "hour",
-    api_key: str | None = None,
     map_variables: bool = True,
     url: str = URL,
     **kwargs,
 ) -> tuple[pd.DataFrame, dict]:
     """
-    Retrieve data from the DMI's Climate Data API.
+    Retrieve data from DMI's Climate Data API.
 
     Parameters
     ----------
@@ -134,13 +151,15 @@ def get_dmi_climate_data(
     end : datetime-like
         Last timestamp of the requested period (inclusive). Timezone-naive
         values are assumed to be UTC.
-    parameters : str or list of str or None, default None
+    parameters : str or list of str, defaults to all parameters
         DMI parameter identifiers to retrieve, e.g. ``'mean_temp'`` or
-        ``['mean_temp', 'mean_wind_speed']``. If ``None``, all available
-        parameters for the station are returned.
+        ``['mean_temp', 'mean_wind_speed']``. If no value is passed, all
+        available parameters for the station are returned.
     time_resolution : str, default ``'hour'``
-        Temporal resolution of the data. Valid values include ``'hour'``,
-        ``'day'``, ``'month'``, and ``'year'``.
+        Temporal resolution of the data. DMI values ``'hour'``, ``'day'``,
+        ``'month'``, and ``'year'`` are accepted directly. Standard pandas
+        frequency aliases (e.g. ``'h'``, ``'D'``, ``'ME'``, ``'YE'``) are
+        also accepted and mapped automatically via :data:`TIME_STEP_MAP`.
     map_variables : bool, default True
         If ``True``, rename DataFrame columns from DMI parameter IDs to
         standard pvlib variable names. Parameters without a mapping are
@@ -154,8 +173,8 @@ def get_dmi_climate_data(
     Returns
     -------
     data : pd.DataFrame
-        Time series with a UTC-aware :class:`~pandas.DatetimeIndex`. Each
-        column corresponds to one climate parameter.
+        Time series with a :class:`~pandas.DatetimeIndex`. For hourly data
+        the timezone is set to UTC.
     meta : dict
         Station metadata with keys ``'station_id'``, ``'name'``,
         ``'latitude'``, ``'longitude'``, ``'altitude'``, and ``'country'``.
@@ -185,9 +204,13 @@ def get_dmi_climate_data(
     ... )
     """
     datetime_interval = _format_datetime_interval(start, end)
+    time_resolution = TIME_STEP_MAP.get(time_resolution, time_resolution)
 
     if parameters is None or isinstance(parameters, str):
         parameters = [parameters]
+    # allow for passing in standard pvlib/solarpy names
+    reverse_variable_map = {v: k for k, v in VARIABLE_MAP.items()}
+    parameters = [reverse_variable_map.get(p, p) for p in parameters]
 
     records: list[dict] = []
     for pid in parameters:
@@ -198,18 +221,17 @@ def get_dmi_climate_data(
                 pid,
                 time_resolution,
                 url,
-                api_key,
                 **kwargs,
             )
         )
 
-    meta = _fetch_station_meta(station, url, api_key, **kwargs)
+    meta = _fetch_station_meta(station, url, **kwargs)
 
     if not records:
         return pd.DataFrame(), meta
 
     df = pd.DataFrame(records)
-    df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
+    df["timestamp"] = pd.to_datetime(df["timestamp"])
     data = df.pivot_table(
         index="timestamp", columns="parameterId", values="value", aggfunc="first"
     )
