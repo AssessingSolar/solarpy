@@ -141,6 +141,9 @@ def get_dmi_climate_data(
     """
     Retrieve data from DMI's Climate Data API.
 
+    The function currently only supports fetching data
+    from stations and not the gridded dataset.
+
     Parameters
     ----------
     station : str
@@ -154,16 +157,17 @@ def get_dmi_climate_data(
     parameters : str or list of str, optional
         DMI parameter identifiers to retrieve, e.g. ``'mean_temp'`` or
         ``['mean_temp', 'mean_wind_speed']``. If no value is passed, all
-        available parameters for the station are returned.
+        available parameters for the station are returned. Note, that the
+        parameter naming convention differs from DMI's observation data API.
     time_resolution : str, default ``'hour'``
-        Temporal resolution of the data. DMI values ``'hour'``, ``'day'``,
-        ``'month'``, and ``'year'`` are accepted directly. Standard pandas
-        frequency aliases (e.g. ``'h'``, ``'D'``, ``'ME'``, ``'YE'``) are
-        also accepted and mapped automatically via :data:`TIME_STEP_MAP`.
+        Temporal resolution of the data. DMI climate data supports ``'hour'``,
+        ``'day'``, ``'month'``, and ``'year'``. Standard pandas frequency
+        aliases (e.g. ``'h'``, ``'D'``, ``'ME'``, ``'YE'``) are
+        also accepted and mapped via :data:`TIME_STEP_MAP`.
     map_variables : bool, default True
-        If ``True``, rename DataFrame columns from DMI parameter IDs to
+        Whether to rename column names from DMI parameter IDs to
         standard pvlib variable names. Parameters without a mapping are
-        kept under their original names.
+        not renamed.
     url : str, optional
         Base URL for the DMI Climate Data API.
     **kwargs
@@ -190,16 +194,15 @@ def get_dmi_climate_data(
 
     Examples
     --------
-    Retrieve hourly mesaured mean temperature and wind speed for
-    Copenhagen Airport:
+    Retrieve hourly measured mean temperature and irradiance for
+    the Sjælsmark station north of Copenhagen:
 
     >>> import solarpy
-    >>> import pandas as pd
     >>> data, meta = solarpy.iotools.get_dmi_climate_data(
-    ...     station='06180',
-    ...     start=pd.Timestamp('2023-06-01'),
-    ...     end=pd.Timestamp('2023-06-30'),
-    ...     parameters=['mean_temp', 'mean_wind_speed'],
+    ...     station='06188',  # Sjælsmark station id
+    ...     start='2023-06-01',
+    ...     end='2023-06-30',
+    ...     parameters=['mean_temp', 'mean_radiation'],
     ...     timeout=30,
     ... )
     """
@@ -235,8 +238,6 @@ def get_dmi_climate_data(
     data = df.pivot_table(
         index="timestamp", columns="parameterId", values="value", aggfunc="first"
     )
-    data.columns.name = None
-    data.index.name = None
 
     if map_variables:
         data = data.rename(columns=VARIABLE_MAP)
