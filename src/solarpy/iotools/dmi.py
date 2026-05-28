@@ -186,6 +186,9 @@ def get_dmi_climate_data(
     """
     datetime_interval = _format_datetime_interval(start, end)
 
+    if parameters is None or isinstance(parameters, str):
+        parameters = [parameters]
+
     records: list[dict] = []
     for pid in parameters:
         records.extend(

@@ -19,6 +19,7 @@ Code documentation
    quality.bsrn_limits_flag
    quality.diffuse_fraction_flag
    quality.closure_flag
+   iotools.get_dmi_climate_data
    iotools.read_t16
    iotools.write_t16
    processing.resample_to_freq
