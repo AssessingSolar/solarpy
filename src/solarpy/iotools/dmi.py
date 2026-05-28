@@ -151,7 +151,7 @@ def get_dmi_climate_data(
     end : datetime-like
         Last timestamp of the requested period (inclusive). Timezone-naive
         values are assumed to be UTC.
-    parameters : str or list of str, defaults to all parameters
+    parameters : str or list of str, optional
         DMI parameter identifiers to retrieve, e.g. ``'mean_temp'`` or
         ``['mean_temp', 'mean_wind_speed']``. If no value is passed, all
         available parameters for the station are returned.
