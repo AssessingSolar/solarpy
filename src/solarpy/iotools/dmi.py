@@ -17,7 +17,7 @@ VARIABLE_MAP = {
 }
 
 # Maps pandas frequency aliases to DMI timeResolution values.
-# Covers both current aliases (pandas >= 2.2) and deprecated ones.
+# Covers current aliases (pandas >= 2.2)
 TIME_STEP_MAP = {
     # Hourly
     "h": "hour",
@@ -28,15 +28,11 @@ TIME_STEP_MAP = {
     "1D": "day",
     "1d": "day",
     # Monthly
-    "ME": "month",  # month end, pandas >= 2.2
     "MS": "month",  # month start
-    "1ME": "month",
     "1MS": "month",
     # Yearly
-    "YE": "year",  # year end, pandas >= 2.2
     "YS": "year",  # year start
     "y": "year",
-    "1YE": "year",
     "1YS": "year",
     "1y": "year",
 }
@@ -169,8 +165,8 @@ def get_dmi_climate_data(
         parameter naming convention differs from DMI's observation data API.
     time_resolution : str, default ``'hour'``
         Temporal resolution of the data. DMI climate data supports ``'hour'``,
-        ``'day'``, ``'month'``, and ``'year'``. Standard pandas frequency
-        aliases (e.g. ``'h'``, ``'D'``, ``'ME'``, ``'YE'``) are
+        ``'day'``, ``'month'``, and ``'year'``. Most standard pandas frequency
+        aliases (e.g. ``'h'``, ``'D'``, ``'MS'``, ``'YS'``) are
         also accepted and mapped via :data:`TIME_STEP_MAP`.
     map_variables : bool, default True
         Whether to rename column names from DMI parameter IDs to
@@ -243,6 +239,7 @@ def get_dmi_climate_data(
 
     df = pd.DataFrame(records)
     df["timestamp"] = pd.to_datetime(df["timestamp"])
+    df["timestamp"].microsecond
     data = df.pivot_table(
         index="timestamp", columns="parameterId", values="value", aggfunc="first"
     )
