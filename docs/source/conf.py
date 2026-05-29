@@ -35,6 +35,8 @@ extensions = [
     'sphinx_copybutton',  # add copy button to code examples
 ]
 
+autodoc_typehints = "description"  # only show type hints in parameter description
+
 extlinks = {
     'doi': ('https://doi.org/%s', 'doi:%s'),
 }

@@ -17,8 +17,8 @@ VARIABLE_MAP = {
 }
 
 # Maps pandas frequency aliases to DMI timeResolution values.
-# Covers both current aliases (pandas >= 2.2) and deprecated ones.
-TIME_STEP_MAP = {
+# Covers current aliases (pandas >= 2.2)
+TIME_RESOLUTION_MAP = {
     # Hourly
     "h": "hour",
     "1h": "hour",
@@ -28,15 +28,11 @@ TIME_STEP_MAP = {
     "1D": "day",
     "1d": "day",
     # Monthly
-    "ME": "month",  # month end, pandas >= 2.2
     "MS": "month",  # month start
-    "1ME": "month",
     "1MS": "month",
     # Yearly
-    "YE": "year",  # year end, pandas >= 2.2
     "YS": "year",  # year start
     "y": "year",
-    "1YE": "year",
     "1YS": "year",
     "1y": "year",
 }
@@ -58,35 +54,80 @@ def _format_datetime_interval(start, end) -> str:
     )
 
 
-def _fetch_station_meta(station_id: str, url: str, **kwargs) -> dict:
-    params: dict = {"stationId": station_id}
+def _raise_for_status(res):
+    # Custom raise for status function which correctly returns error message
+    try:
+        res.raise_for_status()
+    except requests.HTTPError as e:
+        raise requests.HTTPError(f"{e} | Response body: {res.text}") from e
+
+
+def get_dmi_station_meta(
+    station: str,
+    entry_no: int = -1,
+    url: str = URL,
+    **kwargs,
+) -> dict:
+    """
+    Retrieve metadata for a DMI climate station.
+
+    Parameters
+    ----------
+    station : str
+        DMI station identifier, e.g. ``'06180'`` for Copenhagen Airport.
+    entry_no : int, default -1
+        Index into the list of station entries returned by the API. The
+        default of ``-1`` selects the most recent entry, which is appropriate
+        for stations that have been relocated over time.
+    url : str, optional
+        Base URL for the DMI Climate Data API.
+    **kwargs
+        Additional keyword arguments forwarded to :func:`requests.get`,
+        e.g. ``timeout=30``.
+
+    Returns
+    -------
+    meta : dict
+        Station metadata with keys ``'station_id'``, ``'name'``,
+        ``'latitude'``, ``'longitude'``, ``'altitude'``, and ``'country'``.
+
+    Notes
+    -----
+    The DMI Climate Data API is documented at
+    https://www.dmi.dk/friedata/dokumentation/apis/climate-data-api-1.
+    A list of stations can be found at
+    https://www.dmi.dk/friedata/dokumentation/data/climate-data-stations.
+
+    Examples
+    --------
+    >>> import solarpy
+    >>> meta = solarpy.iotools.get_dmi_station_meta('06188', timeout=30)
+    """
+    params: dict = {"stationId": station}
     res = requests.get(url + "collections/station/items", params=params, **kwargs)
-    res.raise_for_status()
+    _raise_for_status(res)
     body = res.json()
 
-    meta: dict = {
-        "station_id": station_id,
-        "name": None,
-        "latitude": None,
-        "longitude": None,
-        "altitude": None,
-        "country": None,
-    }
     features = body.get("features", [])
-    if features:
-        feat = features[0]
-        props = feat.get("properties", {})
-        coords = feat.get("geometry", {}).get("coordinates", [None, None])
-        meta["longitude"] = coords[0]
-        meta["latitude"] = coords[1]
-        meta["name"] = props.get("name")
-        meta["country"] = props.get("country")
-        meta["altitude"] = props.get("stationHeight")
+    if features == []:
+        raise ValueError(f"No metadata was found for station '{station}'.")
+    feat = features[entry_no]
+    meta = feat["properties"]
+
+    props = feat.get("properties", {})
+    coords = feat.get("geometry", {}).get("coordinates", [None, None])
+    meta["longitude"] = coords[0]
+    meta["latitude"] = coords[1]
+    meta["altitude"] = props.get("stationHeight")
+    meta["country"] = {"GRL": "Greenland", "DNK": "Denmark"}.get(
+        meta["country"], meta["country"]
+    )
+
     return meta
 
 
-def _fetch_parameter(
-    station_id: str,
+def _fetch_dmi_data(
+    station: str,
     datetime_interval: str,
     parameter_id: str | None,
     time_resolution: str,
@@ -95,7 +136,7 @@ def _fetch_parameter(
 ) -> list[dict]:
     """Fetch all pages for a single parameter (or all parameters if None)."""
     params: dict = {
-        "stationId": station_id,
+        "stationId": station,
         "datetime": datetime_interval,
         "timeResolution": time_resolution,
         "limit": LIMIT,
@@ -110,7 +151,7 @@ def _fetch_parameter(
     while True:
         params["offset"] = offset
         res = requests.get(endpoint, params=params, **kwargs)
-        res.raise_for_status()
+        _raise_for_status(res)
         body = res.json()
         for feat in body.get("features", []):
             props = feat["properties"]
@@ -128,7 +169,7 @@ def _fetch_parameter(
     return records
 
 
-def get_dmi_climate_data(
+def get_dmi_climate_station_data(
     station: str,
     start,
     end,
@@ -141,8 +182,8 @@ def get_dmi_climate_data(
     """
     Retrieve data from DMI's Climate Data API.
 
-    The function currently only supports fetching data
-    from stations and not the gridded dataset.
+    The Danish Meteorological Institute (DMI) operates automatic
+    weather stations in Denmark and Greenland.
 
     Parameters
     ----------
@@ -161,9 +202,9 @@ def get_dmi_climate_data(
         parameter naming convention differs from DMI's observation data API.
     time_resolution : str, default ``'hour'``
         Temporal resolution of the data. DMI climate data supports ``'hour'``,
-        ``'day'``, ``'month'``, and ``'year'``. Standard pandas frequency
-        aliases (e.g. ``'h'``, ``'D'``, ``'ME'``, ``'YE'``) are
-        also accepted and mapped via :data:`TIME_STEP_MAP`.
+        ``'day'``, ``'month'``, and ``'year'``. Most standard pandas frequency
+        aliases (e.g. ``'h'``, ``'D'``, ``'MS'``, ``'YS'``) are
+        also accepted and mapped via :data:`TIME_RESOLUTION_MAP`.
     map_variables : bool, default True
         Whether to rename column names from DMI parameter IDs to
         standard pvlib variable names. Parameters without a mapping are
@@ -198,7 +239,7 @@ def get_dmi_climate_data(
     the Sjælsmark station north of Copenhagen:
 
     >>> import solarpy
-    >>> data, meta = solarpy.iotools.get_dmi_climate_data(
+    >>> data, meta = solarpy.iotools.get_dmi_climate_station_data(
     ...     station='06188',  # Sjælsmark station id
     ...     start='2023-06-01',
     ...     end='2023-06-30',
@@ -207,7 +248,7 @@ def get_dmi_climate_data(
     ... )
     """
     datetime_interval = _format_datetime_interval(start, end)
-    time_resolution = TIME_STEP_MAP.get(time_resolution, time_resolution)
+    time_resolution = TIME_RESOLUTION_MAP.get(time_resolution, time_resolution)
 
     if parameters is None or isinstance(parameters, str):
         parameters = [parameters]
@@ -218,7 +259,7 @@ def get_dmi_climate_data(
     records: list[dict] = []
     for pid in parameters:
         records.extend(
-            _fetch_parameter(
+            _fetch_dmi_data(
                 station,
                 datetime_interval,
                 pid,
@@ -228,18 +269,20 @@ def get_dmi_climate_data(
             )
         )
 
-    meta = _fetch_station_meta(station, url, **kwargs)
+    if records:
 
-    if not records:
-        return pd.DataFrame(), meta
+        df = pd.DataFrame(records)
+        df["timestamp"] = pd.to_datetime(df["timestamp"])
+        data = df.pivot_table(
+            index="timestamp", columns="parameterId", values="value", aggfunc="first"
+        )
 
-    df = pd.DataFrame(records)
-    df["timestamp"] = pd.to_datetime(df["timestamp"])
-    data = df.pivot_table(
-        index="timestamp", columns="parameterId", values="value", aggfunc="first"
-    )
+        if map_variables:
+            data = data.rename(columns=VARIABLE_MAP)
 
-    if map_variables:
-        data = data.rename(columns=VARIABLE_MAP)
+    else:
+        data = pd.DataFrame()
+
+    meta = get_dmi_station_meta(station, url=url, **kwargs)
 
     return data, meta
