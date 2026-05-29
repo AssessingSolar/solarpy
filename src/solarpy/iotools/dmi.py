@@ -239,7 +239,7 @@ def get_dmi_climate_station_data(
     the Sjælsmark station north of Copenhagen:
 
     >>> import solarpy
-    >>> data, meta = solarpy.iotools.get_dmi_climate_data(
+    >>> data, meta = solarpy.iotools.get_dmi_climate_station_data(
     ...     station='06188',  # Sjælsmark station id
     ...     start='2023-06-01',
     ...     end='2023-06-30',
