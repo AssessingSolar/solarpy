@@ -86,14 +86,12 @@ def plot_time_drift_correlation(
 
     # select measured and clearsky GHI data and set other values to NaN
     times = pd.DatetimeIndex(times)
-    days = pd.date_range(min(times), max(times), freq="1d")
 
     ghi_clear_csd = pd.Series(ghi_clear, index=times)[is_clearsky]
     ghi_csd = pd.Series(ghi, index=times)[is_clearsky]
 
     # calculate correlation for time lags varying between -30 and +30 minutes
     time_lags = np.arange(-30, 31)
-    correlations = np.zeros((len(days), len(time_lags)))
 
     for ii, time_lag in enumerate(time_lags):
         ghi_clear_shifted = pd.Series(ghi_clear, index=times).shift(
@@ -105,6 +103,9 @@ def plot_time_drift_correlation(
         )
         corr_daily = corr.resample("1D").mean()
 
+        if ii == 0:
+            days = corr_daily.index
+            correlations = np.full((len(days), len(time_lags)), np.nan)
         correlations[:, ii] = corr_daily.values
 
     x_lims = mdates.date2num((min(days), max(days)))
