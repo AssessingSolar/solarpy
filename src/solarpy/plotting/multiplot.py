@@ -3,12 +3,13 @@ import matplotlib.pyplot as plt
 import datetime as dt
 import matplotlib.gridspec as gridspec
 from solarpy.plotting import (
-    plot_intraday_heatmap,
+    two_part_colormap,
     irradiance_colormap_and_norm,
-    plot_shading_heatmap,
+    plot_intraday_heatmap,
     plot_google_maps,
     plot_scatter_heatmap,
-    two_part_colormap,
+    plot_shading_heatmap,
+    plot_time_drift_correlation,
 )
 from solarpy.quality import bsrn_limits
 import matplotlib.dates as mdates
@@ -618,8 +619,24 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         pos = ax.get_position()
         ax.set_position([pos.x0, pos.y0 + 0.02, pos.width, pos.height - 0.02])
 
-    # TODO: Add correlation plot
-    axes["corr"].set_axis_off()
+    plot_time_drift_correlation(
+        times=data.index,
+        ghi=data["ghi"],
+        ghi_clear=data["ghi_clear"],
+        is_clearsky=data["is_clearsky"],
+        window="5D",
+        min_periods=240,
+        plot_colorbar=True,
+        colorbar_label="Correlation [-]",
+        cmap="viridis_r",
+        ax=axes["corr"],
+    )
+    axes["corr"].text(
+        0.02,
+        0.02,
+        "Cross-correlation between measured and modeled clearsky GHI.",
+        transform=axes["corr"].transAxes,
+    )
 
     # Plot shading plots
     shading_clabels = ["Kt = GHI / TOA / cos(Z) [-]", "Kn = DNI / TOA [-]"]
