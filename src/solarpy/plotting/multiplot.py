@@ -637,12 +637,11 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
             norm=Normalize(vmin=0, vmax=0.7),
             colorbar_label=clabel,
             northern_hemisphere=meta["latitude"] > 0,
+            horizon=horizon,
         )
-        if horizon is not None:
-            ax.plot(horizon.index, horizon, c="r", label="Horizon line")
     axes["sun1"].set_xticks([])
     axes["sun1"].set_xlabel(None)
     if horizon is not None:
-        axes["sun1"].legend(loc="upper right", frameon=False)
+        axes["sun2"].get_legend().remove()
 
     return fig, axes

@@ -6,6 +6,7 @@ from typing import Any, Callable
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy.stats import binned_statistic_2d
 
@@ -20,6 +21,7 @@ def plot_shading_heatmap(
     cmap: str = "viridis",
     norm=None,
     northern_hemisphere: bool = True,
+    horizon: pd.Series | None = None,
     colorbar: bool = True,
     colorbar_label: str | None = None,
     ax: plt.Axes | None = None,
@@ -54,6 +56,11 @@ def plot_shading_heatmap(
         north there, so the solar azimuth path crosses 0°/360°. When
         ``False``, azimuths are shifted to centre the plot around north,
         keeping the sun path continuous. Default is ``True``.
+    horizon : pd.Series, optional
+        Horizon elevation profile to overlay on the heatmap. The index
+        must contain azimuth angles in degrees and the values must contain
+        the corresponding horizon elevation angles in degrees. Matches the
+        output of :func:`solarpy.horizon.get_horizon_mines`.
     encoding : callable or str, optional
         Reduction function applied to the values in each bin. Accepts any
         string supported by ``scipy.stats.binned_statistic_2d`` (``'max'``,
@@ -132,7 +139,15 @@ def plot_shading_heatmap(
     else:
         az_min = -180
         az_max = 180 - elevation_bin_size
-        solar_azimuth = np.where(solar_azimuth > 180, solar_azimuth - 360, solar_azimuth)
+        solar_azimuth = np.where(
+            solar_azimuth > 180, solar_azimuth - 360, solar_azimuth
+        )
+        if horizon is not None:
+            horizon = horizon.copy()  # avoid mutating the original object
+            horizon.index = np.where(
+                horizon.index > 180, horizon.index - 360, horizon.index
+            )
+            horizon = horizon.sort_index()
 
     # Build bin edges
     el_min = 0
@@ -143,7 +158,9 @@ def plot_shading_heatmap(
 
     # Accumulate per-bin encoding (n_el rows × n_az cols)
     matrix, _x_edges, _y_edges, _binnumber = binned_statistic_2d(
-        solar_azimuth, solar_elevation, value,
+        solar_azimuth,
+        solar_elevation,
+        value,
         statistic=encoding,
         bins=[az_edges, el_edges],
     )
@@ -187,8 +204,14 @@ def plot_shading_heatmap(
         ax.set_xlim(-180, 180)
     ax.set_xlabel("Solar azimuth [°]")
 
+    if horizon is not None:
+        ax.plot(horizon.index, horizon, c="r", label="Horizon line")
+        ax.legend(loc="upper right")
+
     el_tick_step = 5 if (el_max - el_min) <= 45 else 10
-    el_ticks = np.arange(0, np.ceil(el_max/el_tick_step)*el_tick_step+1, el_tick_step)
+    el_ticks = np.arange(
+        0, np.ceil(el_max / el_tick_step) * el_tick_step + 1, el_tick_step
+    )
     ax.set_yticks(el_ticks)
     ax.set_ylim(0, el_ticks[-1])
     ax.set_ylabel("Solar elevation [°]")
