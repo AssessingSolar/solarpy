@@ -74,8 +74,8 @@ def two_part_colormap(start_color='lightgrey', colormap='viridis', n_gradient=64
 
 
 IRRADIANCE_COLOR_BANDS = [
-    (-100, -10, "deeppink"),  # unfeasible high negative offsets
-    (-10, -2, "orange"),      # high negative offsets
+    (-100, -6, "deeppink"),  # unfeasible high negative offsets
+    (-6, -2, "orange"),      # high negative offsets
     (-2, 0, "darkgrey"),      # acceptable negative offsets
     (0, 2, "lightgrey"),      # near-zero positive values
 ]
@@ -96,7 +96,7 @@ def irradiance_colormap_and_norm(
     - **Solid color bands** for negative and near-zero values, where irradiance
       measurements are dominated by thermal offsets. The default bands
       (``IRRADIANCE_COLOR_BANDS``) encode data quality: unfeasible offsets
-      [-100, -10), high negative offsets [-10, -2), acceptable negative offsets
+      [-100, -6), high negative offsets [-6, -2), acceptable negative offsets
       [-2, 0), and near-zero positive values [0, 2).
     - **Continuous colormap** for the physically meaningful range from the upper
       edge of the solid bands to ``vmax``.

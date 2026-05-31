@@ -105,13 +105,12 @@ def plot_intraday_heatmap(
     time = np.asarray(time, dtype="datetime64[ns]")
     values = np.asarray(values, dtype=float)
 
-    if time.size == 0 or values.size == 0:
-        raise ValueError("time and values must not be empty.")
     if len(time) != len(values):
         raise ValueError(
             f"time and values must have the same length, "
             f"got {len(time)} and {len(values)}."
         )
+    # The smallest resolution currently supported is 1min
     if 1440 % resolution != 0:
         raise ValueError(f"resolution must evenly divide 1440, got {resolution}.")
 

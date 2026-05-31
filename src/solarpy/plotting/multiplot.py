@@ -12,7 +12,7 @@ from solarpy.plotting import (
 )
 from solarpy.quality import bsrn_limits
 import matplotlib.dates as mdates
-from matplotlib.colors import TwoSlopeNorm
+from matplotlib.colors import TwoSlopeNorm, Normalize
 import pandas as pd
 import pvlib
 
@@ -310,6 +310,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     axes["ts_scatter"][2].set_xticks(
         ts_xticks, ts_xticks.strftime("%b %Y"), ha="right", rotation=30
     )
+    axes["ts_scatter"][2].set_xlim(ts_xlim)
 
     # Scatter plot settings
     scatter_params = {
@@ -501,7 +502,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         axes["maps"][1].text(
             0.5,
             0.5,
-            "Maps not shown.\nGoogle API was not provided.",
+            "Maps not shown.\nA Google API key was not provided.",
             ha="center",
             va="center",
             color="grey",
@@ -632,13 +633,16 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
             solar_azimuth=data["solar_azimuth"][mask],
             solar_elevation=90 - data["solar_zenith"][mask],
             ax=ax,
+            cmap="viridis",
+            norm=Normalize(vmin=0, vmax=0.7),
             colorbar_label=clabel,
             northern_hemisphere=meta["latitude"] > 0,
         )
         if horizon is not None:
             ax.plot(horizon.index, horizon, c="r", label="Horizon line")
     axes["sun1"].set_xticks([])
-    axes["sun1"].legend(loc="upper right", frameon=False)
     axes["sun1"].set_xlabel(None)
+    if horizon is not None:
+        axes["sun1"].legend(loc="upper right", frameon=False)
 
     return fig, axes

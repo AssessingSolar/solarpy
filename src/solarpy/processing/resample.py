@@ -42,7 +42,7 @@ def resample_to_freq(data, freq, full_days=True, verbose=True):
         n_discarded = len(data.index.difference(full_index))
         print(
             f"Resampled: {n_added} timesteps added ({n_added/n_total*100:2.1f}%), "
-            f"{n_discarded} discarded ({n_discarded/n_added*100:2.1f}%)"
+            f"{n_discarded} discarded ({n_discarded/n_total*100:2.1f}%)"
         )
 
     data = data.reindex(full_index)
