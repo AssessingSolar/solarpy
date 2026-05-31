@@ -12,4 +12,5 @@ Plotting
    plotting.plot_intraday_heatmap
    plotting.plot_shading_heatmap
    plotting.plot_scatter_heatmap
+   plotting.plot_time_drift_correlation
    plotting.multiplot
