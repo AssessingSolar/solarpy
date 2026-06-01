@@ -18,6 +18,7 @@ import pandas as pd
 import pvlib
 
 
+# %%
 def _multiplot_layout(figsize=(24, 16)):
     """
     Create the visual plausibility control figure layout.
@@ -78,7 +79,7 @@ def _multiplot_layout(figsize=(24, 16)):
         6,
         1,
         subplot_spec=outer[3],
-        hspace=0.1,
+        hspace=0.15,
         height_ratios=[1.5, 0.7, 1.2, 1.2, 1.4, 1.4],
     )
     gs_maps = gridspec.GridSpecFromSubplotSpec(
@@ -205,23 +206,21 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         meta["longitude"],
     )
     sun_rise_minutes = (
-        sun_rise_set["sunrise"].dt.hour.values * 60
-        + sun_rise_set["sunrise"].dt.minute.values
+        sun_rise_set["sunrise"].dt.hour * 60 + sun_rise_set["sunrise"].dt.minute
     )
     sun_set_minutes = (
-        sun_rise_set["sunset"].dt.hour.values * 60
-        + sun_rise_set["sunset"].dt.minute.values
+        sun_rise_set["sunset"].dt.hour * 60 + sun_rise_set["sunset"].dt.minute
     )
 
     # Intraday heat map plots
     cmap, norm = irradiance_colormap_and_norm(vmax=1000)
     for ax, c in zip(axes["heatmap"], components):
+        ax.plot(sun_rise_minutes, **limit_line_params)
+        ax.plot(sun_set_minutes, **limit_line_params)
         plot_intraday_heatmap(
             time=times, values=data[c], ax=ax, plot_colorbar=False, cmap=cmap, norm=norm
         )
         ax.text(0.02, 0.95, c.upper(), va="top", ha="left", transform=ax.transAxes)
-        ax.plot(sun_rise_minutes, **limit_line_params)
-        ax.plot(sun_set_minutes, **limit_line_params)
 
     ts_scatter_params = dict(
         xlim=mdates.date2num(ts_xlim),
@@ -639,6 +638,9 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         "Cross-correlation between measured and modeled clearsky GHI.",
         transform=axes["corr"].transAxes,
     )
+    td_xticklabels = ts_xticks.strftime("%b")
+    axes["corr"].set_xticks(ts_xticks, td_xticklabels)
+    axes["corr"].set_xlim(ts_xlim)
 
     # Plot shading plots
     shading_clabels = ["Kt = GHI / TOA / cos(Z) [-]", "Kn = DNI / TOA [-]"]
@@ -665,3 +667,6 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         axes["sun2"].get_legend().remove()
 
     return fig, axes
+
+
+# %%
