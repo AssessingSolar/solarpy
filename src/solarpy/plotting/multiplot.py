@@ -619,28 +619,31 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         pos = ax.get_position()
         ax.set_position([pos.x0, pos.y0 + 0.02, pos.width, pos.height - 0.02])
 
-    plot_time_drift_correlation(
-        times=data.index,
-        ghi=data["ghi"],
-        ghi_clear=data["ghi_clear"],
-        is_clearsky=data["is_clearsky"],
-        window="5D",
-        min_periods=240,
-        plot_colorbar=True,
-        colorbar_label="Correlation [-]",
-        cmap="viridis_r",
-        ax=axes["corr"],
-    )
-    axes["corr"].text(
-        0.02,
-        0.02,
-        "Cross-correlation between measured and modeled clearsky GHI.",
-        transform=axes["corr"].transAxes,
-    )
-    td_xticklabels = ts_xticks.strftime("%Y %b")
-    axes["corr"].set_xticks(ts_xticks[::2], td_xticklabels[::2], rotation=0)
-    axes["corr"].set_xticks(ts_xticks, minor=True)
-    axes["corr"].set_xlim(ts_xlim)
+    if ("ghi_clear" in data.columns) & ("is_clearsky" in data.columns):
+        plot_time_drift_correlation(
+            times=data.index,
+            ghi=data["ghi"],
+            ghi_clear=data["ghi_clear"],
+            is_clearsky=data["is_clearsky"],
+            window="5D",
+            min_periods=240,
+            plot_colorbar=True,
+            colorbar_label="Correlation [-]",
+            cmap="viridis_r",
+            ax=axes["corr"],
+        )
+        axes["corr"].text(
+            0.02,
+            0.02,
+            "Cross-correlation between measured and modeled clearsky GHI.",
+            transform=axes["corr"].transAxes,
+        )
+        td_xticklabels = ts_xticks.strftime("%Y %b")
+        axes["corr"].set_xticks(ts_xticks[::2], td_xticklabels[::2], rotation=0)
+        axes["corr"].set_xticks(ts_xticks, minor=True)
+        axes["corr"].set_xlim(ts_xlim)
+    else:
+        ax.set_axis_off()
 
     # Plot shading plots
     shading_clabels = ["Kt = GHI / TOA / cos(Z) [-]", "Kn = DNI / TOA [-]"]
