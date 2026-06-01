@@ -188,7 +188,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     fig, axes = _multiplot_layout(figsize=figsize)
 
     ts_xlim = (times.date.min(), times.date.max() + dt.timedelta(days=1))
-    days = int(np.ceil((ts_xlim[1] - ts_xlim[0]).days)) + 1
+    days = len(set(times.date))
     limit_line_params = {"lw": 1.5, "alpha": 0.8, "c": "r"}
 
     # Time series plots
@@ -638,8 +638,9 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         "Cross-correlation between measured and modeled clearsky GHI.",
         transform=axes["corr"].transAxes,
     )
-    td_xticklabels = ts_xticks.strftime("%b")
-    axes["corr"].set_xticks(ts_xticks, td_xticklabels)
+    td_xticklabels = ts_xticks.strftime("%Y %b")
+    axes["corr"].set_xticks(ts_xticks[::2], td_xticklabels[::2], rotation=0)
+    axes["corr"].set_xticks(ts_xticks, minor=True)
     axes["corr"].set_xlim(ts_xlim)
 
     # Plot shading plots
