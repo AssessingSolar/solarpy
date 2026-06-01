@@ -196,7 +196,6 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     for ax, c in zip(axes["line"], components):
         ax.plot(data[c].resample("5min").max(), lw=0.5)
         ax.set_ylabel(f"{c.upper()} [W/m²]")
-        ax.set_xlim(ts_xlim)
         ax.set_ylim(0, None)
 
     # Determine sunrise and sunset
@@ -301,17 +300,20 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
 
     for ax in axes["ts_scatter"]:
         ax.axhline(1, linestyle="--", **limit_line_params)
-        ax.set_xlim(ts_xlim)
 
     fig.align_ylabels(axes["line"] + axes["heatmap"] + axes["ts_scatter"])
-    # Remove xticks for time series plots
-    [ax.set_xticks([]) for ax in axes["line"] + axes["heatmap"] + axes["ts_scatter"]]
+
+    # Set xticks and xlimits
     ts_xticks = pd.date_range(ts_xlim[0], ts_xlim[1], freq="MS")
+    ts_xticklabels = ts_xticks.strftime("%Y %b")
+    for ax in axes["line"] + axes["heatmap"] + axes["ts_scatter"]:
+        ax.set_xticks(ts_xticks)
+        ax.set_xticklabels([])
+        ax.set_xlim(ts_xlim)
     # Set xticks for the bottom time series plot
-    axes["ts_scatter"][2].set_xticks(
-        ts_xticks, ts_xticks.strftime("%b %Y"), ha="right", rotation=30
+    axes["ts_scatter"][-1].set_xticks(
+        ts_xticks, ts_xticklabels, ha="right", rotation=30
     )
-    axes["ts_scatter"][2].set_xlim(ts_xlim)
 
     # Scatter plot settings
     scatter_params = {
@@ -645,17 +647,18 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     ):
         mask = value < 1
         # TODO: Make a better filtering
-        plot_shading_heatmap(
-            value=value[mask],
-            solar_azimuth=data["solar_azimuth"][mask],
-            solar_elevation=90 - data["solar_zenith"][mask],
-            ax=ax,
-            cmap="viridis",
-            norm=Normalize(vmin=0, vmax=0.7),
-            colorbar_label=clabel,
-            northern_hemisphere=meta["latitude"] > 0,
-            horizon=horizon,
-        )
+        if sum(mask) > 0:  # only plot if array is not empty
+            plot_shading_heatmap(
+                value=value[mask],
+                solar_azimuth=data["solar_azimuth"][mask],
+                solar_elevation=90 - data["solar_zenith"][mask],
+                ax=ax,
+                cmap="viridis",
+                norm=Normalize(vmin=0, vmax=0.7),
+                colorbar_label=clabel,
+                northern_hemisphere=meta["latitude"] > 0,
+                horizon=horizon,
+            )
     axes["sun1"].set_xticks([])
     axes["sun1"].set_xlabel(None)
     if horizon is not None:

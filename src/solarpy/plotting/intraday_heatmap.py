@@ -103,6 +103,16 @@ def plot_intraday_heatmap(
     >>> fig, ax = solarpy.plotting.plot_intraday_heatmap(
     ...     time, values, resolution=10)
     """
+    # ------------------------------------------------------------------ #
+    # Figure / axes                                                      #
+    # ------------------------------------------------------------------ #
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(min(max(4, n_dates * 0.5), 8), 2))
+    fig = ax.figure
+
+    # ------------------------------------------------------------------ #
+    # times / values                                                     #
+    # ------------------------------------------------------------------ #
     time = np.asarray(time, dtype="datetime64[ns]")
     values = np.asarray(values, dtype=float)
 
@@ -141,13 +151,6 @@ def plot_intraday_heatmap(
     np.add.at(count, (bin_idx, date_idx), 1)
 
     matrix = np.where(count > 0, total / count, np.nan)
-
-    # ------------------------------------------------------------------ #
-    # Figure / axes                                                      #
-    # ------------------------------------------------------------------ #
-    if ax is None:
-        fig, ax = plt.subplots(figsize=(min(max(4, n_dates * 0.5), 8), 2))
-    fig = ax.figure
 
     # ------------------------------------------------------------------ #
     # pcolormesh expects cell edges: (n+1,) arrays                       #

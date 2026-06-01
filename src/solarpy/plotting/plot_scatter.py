@@ -19,12 +19,19 @@ def plot_scatter_heatmap(
     ax=None,
     **kwargs,
 ):
-    x, y = np.asarray(x), np.asarray(y)
-    finite = np.isfinite(x) & np.isfinite(y)
-
     if ax is None:
         fig, ax = plt.subplots()
     fig = ax.figure
+
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
+
+    # Allow for plotting when all values are nan
+    if len(x) == 0:
+        return fig, ax
+
+    x, y = np.asarray(x), np.asarray(y)
+    finite = np.isfinite(x) & np.isfinite(y)
 
     H, xedges, yedges = np.histogram2d(
         x[finite], y[finite], bins=(xbins, ybins), range=(xlim, ylim)
