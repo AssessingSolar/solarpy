@@ -103,16 +103,6 @@ def plot_intraday_heatmap(
     >>> fig, ax = solarpy.plotting.plot_intraday_heatmap(
     ...     time, values, resolution=10)
     """
-    # ------------------------------------------------------------------ #
-    # Figure / axes                                                      #
-    # ------------------------------------------------------------------ #
-    if ax is None:
-        fig, ax = plt.subplots(figsize=(min(max(4, n_dates * 0.5), 8), 2))
-    fig = ax.figure
-
-    # ------------------------------------------------------------------ #
-    # times / values                                                     #
-    # ------------------------------------------------------------------ #
     time = np.asarray(time, dtype="datetime64[ns]")
     values = np.asarray(values, dtype=float)
 
@@ -126,6 +116,13 @@ def plot_intraday_heatmap(
         raise ValueError(f"resolution must evenly divide 1440, got {resolution}.")
 
     n_bins = 1440 // resolution
+
+    # ------------------------------------------------------------------ #
+    # Figure / axes                                                      #
+    # ------------------------------------------------------------------ #
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(min(max(4, n_dates * 0.5), 8), 2))
+    fig = ax.figure
 
     # ------------------------------------------------------------------ #
     # Extract date and bin index                                         #
