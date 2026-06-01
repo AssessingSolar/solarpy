@@ -6,6 +6,7 @@ from typing import Any
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
@@ -124,8 +125,9 @@ def plot_intraday_heatmap(
     bin_idx = minutes // resolution
 
     # Contiguous date range — missing dates become all-NaN columns
-    all_dates = np.arange(dates.min(), dates.max() + np.timedelta64(1, "D"),
-                          np.timedelta64(1, "D"))
+    all_dates = np.arange(
+        dates.min(), dates.max() + np.timedelta64(1, "D"), np.timedelta64(1, "D")
+    )
     n_dates = len(all_dates)
 
     # ------------------------------------------------------------------ #
@@ -150,8 +152,11 @@ def plot_intraday_heatmap(
     # ------------------------------------------------------------------ #
     # pcolormesh expects cell edges: (n+1,) arrays                       #
     # ------------------------------------------------------------------ #
+    x_edges = mdates.date2num(all_dates.astype("datetime64[ms]").astype(object))
+    x_edges = np.append(x_edges, x_edges[-1] + 1)
+
     mesh = ax.pcolormesh(
-        np.arange(n_dates + 1),
+        x_edges,
         np.arange(n_bins + 1),
         matrix,
         cmap=cmap,
@@ -172,34 +177,18 @@ def plot_intraday_heatmap(
     # ------------------------------------------------------------------ #
     # X-axis — dynamic tick density based on date range                  #
     # ------------------------------------------------------------------ #
-    if n_dates <= 30:  # daily
-        tick_step = 1
-        date_fmt = "%Y-%m-%d"
-    elif n_dates <= 180:  # weekly
-        tick_step = 7
-        date_fmt = "%Y-%m-%d"
-    else:  # monthly (approx)
-        tick_step = 30
-        date_fmt = "%b %Y"
-
-    tick_positions = np.arange(0, n_dates, tick_step)
-    ax.set_xticks(tick_positions + 0.5)
-    ax.set_xticklabels(
-        [all_dates[i].astype("datetime64[D]").astype(object).strftime(date_fmt)
-         for i in tick_positions],
-        rotation=45,
-        ha="right",
-    )
+    ax.xaxis_date()
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y %b"))
+    ax.tick_params(axis="x", rotation=30)
 
     # ------------------------------------------------------------------ #
     # Y-axis — time of day (HH), ticks every 3 hours, midnight at bottom #
     # ------------------------------------------------------------------ #
-    bins_per_hour = 3*60 // resolution
+    bins_per_hour = 3 * 60 // resolution
     tick_bins = np.arange(0, n_bins, bins_per_hour)
     ax.set_yticks(tick_bins + 0.5)
     ax.set_yticklabels(
-        [f"{(b * resolution) // 60:02d}"
-         for b in tick_bins],
+        [f"{(b * resolution) // 60:02d}" for b in tick_bins],
     )
     ax.set_ylabel("Time of day")
 
