@@ -134,6 +134,7 @@ def plot_time_drift_correlation(
             width="30%",
             height="3%",
             loc="upper right",
+            bbox_to_anchor=(0, 0, 1, 1),
             bbox_transform=ax.transAxes,
         )
         fig.colorbar(
