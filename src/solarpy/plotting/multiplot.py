@@ -18,7 +18,6 @@ import pandas as pd
 import pvlib
 
 
-# %%
 def _multiplot_layout(figsize=(24, 16)):
     """
     Create the visual plausibility control figure layout.
@@ -645,9 +644,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
 
     # Plot shading plots
     shading_clabels = ["Kt = GHI / TOA / cos(Z) [-]", "Kn = DNI / TOA [-]"]
-    for value, clabel, ax in zip(
-        [Kt, Kn], shading_clabels, (axes["sun1"], axes["sun2"])
-    ):
+    for ii, (value, ax) in enumerate(zip([Kt, Kn], (axes["sun1"], axes["sun2"]))):
         mask = value < 1
         # TODO: Make a better filtering
         if sum(mask) > 0:  # only plot if array is not empty
@@ -658,14 +655,18 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
                 ax=ax,
                 cmap="viridis",
                 norm=Normalize(vmin=0, vmax=0.7),
-                colorbar_label=clabel,
+                colorbar_label=shading_clabels[ii],
                 northern_hemisphere=meta["latitude"] > 0,
                 horizon=horizon,
             )
-    axes["sun1"].set_xticks([])
-    axes["sun1"].set_xlabel(None)
-    if horizon is not None:
-        axes["sun2"].get_legend().remove()
+            # remove xtick of the top figure if the bottom figure is plotted
+            if ii == 1:
+                axes["sun1"].set_xticks([])
+                axes["sun1"].set_xlabel(None)
+                if horizon is not None:
+                    axes["sun2"].get_legend().remove()
+        else:
+            ax.set_axis_off()
 
     return fig, axes
 
