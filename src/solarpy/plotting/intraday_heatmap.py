@@ -118,13 +118,6 @@ def plot_intraday_heatmap(
     n_bins = 1440 // resolution
 
     # ------------------------------------------------------------------ #
-    # Figure / axes                                                      #
-    # ------------------------------------------------------------------ #
-    if ax is None:
-        fig, ax = plt.subplots(figsize=(min(max(4, n_dates * 0.5), 8), 2))
-    fig = ax.figure
-
-    # ------------------------------------------------------------------ #
     # Extract date and bin index                                         #
     # ------------------------------------------------------------------ #
     dates = time.astype("datetime64[D]")
@@ -136,6 +129,13 @@ def plot_intraday_heatmap(
         dates.min(), dates.max() + np.timedelta64(1, "D"), np.timedelta64(1, "D")
     )
     n_dates = len(all_dates)
+
+    # ------------------------------------------------------------------ #
+    # Figure / axes                                                      #
+    # ------------------------------------------------------------------ #
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(min(max(4, n_dates * 0.5), 8), 2))
+    fig = ax.figure
 
     # ------------------------------------------------------------------ #
     # Build n_bins × n_dates matrix, averaging duplicate timestamps      #
