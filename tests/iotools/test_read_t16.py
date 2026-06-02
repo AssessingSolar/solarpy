@@ -99,6 +99,13 @@ def test_map_variables():
     assert "altitude in m amsl" not in meta
 
 
+def test_read_from_url():
+    url = "https://raw.githubusercontent.com/AssessingSolar/solarpy/refs/heads/main/data/LYN_2023.csv"  # noqa: E501
+    data, meta = solarpy.iotools.read_t16(url)
+    assert isinstance(data, pd.DataFrame)
+    assert meta["stationcode"] == "LYN"
+
+
 def test_empty_stationcode_returns_none(tmp_path):
     content = (
         "# stationcode \n"
