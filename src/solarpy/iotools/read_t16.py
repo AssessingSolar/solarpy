@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
-import contextlib
-import os
+import requests
+import io
 
 VARIABLE_MAP = {
     "GHI": "ghi",
@@ -48,14 +48,16 @@ def read_t16(filename, drop_dates=False, map_variables=False, encoding="utf-8"):
         "longitude deg E": np.nan,
         "altitude in m amsl": np.nan,
     }
-    # use of contextlib is similar to pvlib.tools._file_context_manager
-    ctx = (
-        open(filename, "r", encoding=encoding)
-        if isinstance(filename, (str, os.PathLike))
-        else contextlib.nullcontext(filename)
-    )
-    with ctx as fbuf:
-        # Parse through initial metadata section (lines starting with #)
+    if isinstance(filename, str) and filename.startswith(("http://", "https://")):
+        response = requests.get(filename)
+        response.raise_for_status()
+        fbuf = io.StringIO(response.text)
+    elif hasattr(filename, "read"):
+        fbuf = filename
+    else:
+        fbuf = open(filename, "r", encoding=encoding)
+
+    with fbuf:
         while True:
             line = fbuf.readline().strip()
 
