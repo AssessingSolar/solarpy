@@ -100,7 +100,7 @@ def test_map_variables():
 
 
 def test_read_from_url():
-    url = "https://raw.githubusercontent.com/AssessingSolar/solarpy/refs/heads/main/data/LYN_2023.csv"
+    url = "https://raw.githubusercontent.com/AssessingSolar/solarpy/refs/heads/main/data/LYN_2023.csv"  # noqa: E501
     data, meta = solarpy.iotools.read_t16(url)
     assert isinstance(data, pd.DataFrame)
     assert meta["stationcode"] == "LYN"
