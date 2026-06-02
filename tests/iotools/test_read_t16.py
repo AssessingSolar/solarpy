@@ -2,6 +2,7 @@ import pathlib
 
 import pandas as pd
 import pytest
+import io
 
 import solarpy
 
@@ -97,6 +98,21 @@ def test_map_variables():
     assert "latitude deg N" not in meta
     assert "longitude deg E" not in meta
     assert "altitude in m amsl" not in meta
+
+
+def test_read_from_stringio():
+    content = (
+        "# stationcode LYN\n"
+        "# latitude deg N 55.0\n"
+        "# longitude deg E 12.0\n"
+        "# altitude in m amsl 40\n"
+        "#\n"
+        "Year,Month,Day,Hour,Minute,GHI\n"
+        "2023,1,1,0,0,100.0\n"
+    )
+    data, meta = solarpy.iotools.read_t16(io.StringIO(content))
+    assert isinstance(data, pd.DataFrame)
+    assert meta["stationcode"] == "LYN"
 
 
 def test_empty_stationcode_returns_none(tmp_path):

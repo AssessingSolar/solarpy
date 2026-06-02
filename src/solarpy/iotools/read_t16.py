@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import contextlib
+import os
 
 VARIABLE_MAP = {
     "GHI": "ghi",
@@ -46,8 +48,13 @@ def read_t16(filename, drop_dates=False, map_variables=False, encoding="utf-8"):
         "longitude deg E": np.nan,
         "altitude in m amsl": np.nan,
     }
-
-    with open(filename, "r", encoding=encoding) as fbuf:
+    # use of contextlib is similar to pvlib.tools._file_context_manager
+    ctx = (
+        open(filename, "r", encoding=encoding)
+        if isinstance(filename, (str, os.PathLike))
+        else contextlib.nullcontext(filename)
+    )
+    with ctx as fbuf:
         # Parse through initial metadata section (lines starting with #)
         while True:
             line = fbuf.readline().strip()
