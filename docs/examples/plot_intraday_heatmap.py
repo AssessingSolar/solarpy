@@ -10,6 +10,8 @@ date heatmap using :py:func:`solarpy.plotting.plot_intraday_heatmap`.
 # Basic usage
 # -----------
 #
+# sphinx_gallery_thumbnail_number = 2
+#
 # Read a year of 1-minute GHI measurements and plot them as a heatmap.
 
 import solarpy
@@ -52,7 +54,8 @@ fig.tight_layout()
 # thermal offsets and detect instrument changes.
 #
 # The returned ``Axes`` can also be used to overlay additional information, such
-# as sunrise and sunset times calculated with :py:mod:`pvlib.solarposition`.
+# as sunrise and sunset times calculated with
+# :py:mod:`pvlib.solarposition.sun_rise_set_transit_spa`.
 #
 # In the example below, a synthetic data gap and an infeasible negative GHI value
 # are introduced to demonstrate how these features can be visualised in the heatmap.
@@ -63,16 +66,17 @@ import matplotlib.pyplot as plt
 import pvlib
 
 # Introduce a synthetic data gap and an infeasible negative GHI value
-data_advanced = data.copy()
-data_advanced.loc["2023-02-01":"2023-02-15", "ghi"] = float("nan")
-data_advanced.loc["2023-10-01":"2023-10-05", "ghi"] = -150
+data.loc["2023-02-01":"2023-02-15", "ghi"] = float("nan")
+data.loc["2023-10-01":"2023-10-05", "ghi"] = -150
 
+# Create custom colormap and norm
 cmap, norm = solarpy.plotting.irradiance_colormap_and_norm(vmax=1000)
 
 fig, ax = plt.subplots(figsize=(6, 3))
+
 _ = solarpy.plotting.plot_intraday_heatmap(
-    time=data_advanced.index,
-    values=data_advanced["ghi"],
+    time=data.index,
+    values=data["ghi"],
     cmap=cmap,
     norm=norm,
     colorbar_label="GHI [W/m²]",
@@ -97,4 +101,7 @@ fig.tight_layout()
 
 # %%
 # Notice in the advanced example, there is a very sharp line between daytime values
-# and nighttime which makes it easy to detect time shifts in the data.
+# and nighttime which makes it easy to detect time shifts in the data. Also, the
+# custom colorbar makes it possible to quickly identify the magnitude of the nighttime
+# thermal offsets, which in this example has quite some values in the range of -2 to
+# -6 W/m², but no values below -6 W/m².

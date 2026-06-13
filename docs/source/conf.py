@@ -112,4 +112,5 @@ sphinx_gallery_conf = {
     # Disable download button
     'download_all_examples': False,
     # 'parallel': 2,  # did not work locally
+    'remove_config_comments': True,
 }
