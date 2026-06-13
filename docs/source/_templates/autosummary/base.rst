@@ -1,0 +1,8 @@
+{{ fullname | escape | underline}}
+
+.. currentmodule:: {{ module }}
+
+.. auto{{ objtype }}:: {{ objname }}
+
+.. minigallery:: {{ module }}.{{ objname }}
+    :add-heading:
