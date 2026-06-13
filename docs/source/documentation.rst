@@ -1,6 +1,6 @@
 .. currentmodule:: solarpy
 
-API Reference
+Documentation
 =============
 
 .. toctree::
