@@ -54,7 +54,7 @@ templates_path = ['_templates']
 # This pattern also affects html_static_path and html_extra_path.
 # The generated gallery/*.ipynb files are excluded so that myst-nb
 # does not treat them as notebook sources alongside sphinx-gallery's *.rst.
-exclude_patterns = ['gallery/*.ipynb']
+exclude_patterns = ['gallery/*.ipynb', 'gallery/**/*.ipynb']
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -112,7 +112,7 @@ sphinx_gallery_conf = {
     # Disable download button
     'download_all_examples': False,
     # 'parallel': 2,  # did not work locally
-    'remove_config_comments': True,
+
     'subsection_order': [
         '../examples/plots',
         '../examples/errors',
