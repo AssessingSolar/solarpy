@@ -51,6 +51,7 @@ doc = [
     "myst-nb==1.4.0",
     "sphinx-book-theme==1.1.4",
     "sphinx-copybutton==0.5.2",
+    "sphinx-gallery==0.21.0",
     "pvlib==0.14.0",
     "pandas==2.3.3",
 ]

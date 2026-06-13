@@ -13,6 +13,8 @@ dist/
 
 # generated documentation
 docs/source/generated
+docs/source/auto_examples
+docs/source/sg_execution_times.rst
 
 .coverage
 # Byte-compiled / optimized / DLL files
