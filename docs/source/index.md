@@ -17,5 +17,6 @@ Contributions to the repository, e.g., bug fixes, feature request are more than 
 
 installation
 documentation
+gallery/index
 whatsnew
 ```

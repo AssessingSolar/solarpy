@@ -1,0 +1,6 @@
+[flake8]
+max-line-length = 99
+per-file-ignores =
+    # sphinx-gallery examples use `# %%` section breaks, so imports
+    # are not necessarily at the top of the file
+    docs/examples/*.py:E402

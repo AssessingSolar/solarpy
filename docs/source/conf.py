@@ -33,6 +33,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',  # parsing of Numpy docstrings
     'sphinx_copybutton',  # add copy button to code examples
+    'sphinx_gallery.gen_gallery',  # build the example gallery
 ]
 
 autodoc_typehints = "description"  # only show type hints in parameter description
@@ -46,12 +47,14 @@ copybutton_prompt_text = r">>> |\.\.\. "
 copybutton_prompt_is_regexp = True
 
 # Add any paths that contain templates here, relative to this directory.
-# templates_path = ['_templates']
+templates_path = ['_templates']
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+# The generated gallery/*.ipynb files are excluded so that myst-nb
+# does not treat them as notebook sources alongside sphinx-gallery's *.rst.
+exclude_patterns = ['gallery/*.ipynb', 'gallery/**/*.ipynb']
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -91,3 +94,27 @@ intersphinx_mapping = {
 
 # Number of seconds for a cell to execute before timeout (default=30)
 nb_execution_timeout = 120
+
+# -- sphinx-gallery configuration ---------------------------------------------
+
+sphinx_gallery_conf = {
+    'examples_dirs': '../examples',  # path to example scripts
+    'gallery_dirs': 'gallery',  # path to where to save gallery generated output
+    'filename_pattern': r'plot_',
+    'remove_config_comments': True,
+    # link functions/classes used in the examples back to their docs page
+    'doc_module': ('solarpy',),
+    'backreferences_dir': 'generated/gallery_backreferences',
+    'reference_url': {
+        'solarpy': None,
+    },
+    'show_memory': True,
+    # Disable download button
+    'download_all_examples': False,
+    # 'parallel': 2,  # did not work locally
+
+    'subsection_order': [
+        '../examples/plots',
+        '../examples/errors',
+    ],
+}
