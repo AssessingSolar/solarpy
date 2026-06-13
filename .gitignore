@@ -13,7 +13,8 @@ dist/
 
 # generated documentation
 docs/source/generated
-docs/source/auto_examples
+docs/source/gallery
+docs/source/gallery_backreferences
 docs/source/sg_execution_times.rst
 
 .coverage
