@@ -3,7 +3,7 @@ Shading heatmap
 ================
 
 This example shows how to visualise solar irradiance in
-azimuth-elevation (sun-path) space using
+solar azimuth-elevation space using
 :py:func:`solarpy.plotting.plot_shading_heatmap`.
 """
 
@@ -23,17 +23,20 @@ location = pvlib.location.Location(meta["latitude"], meta["longitude"])
 solar_position = location.get_solarposition(data.index)
 
 # %%
-# Normalize GHI by the extraterrestrial irradiance on a horizontal plane to
-# obtain the clearness index, which highlights shaded periods in the
-# sun-path heatmap.
+# Normalize DNI by the extraterrestrial irradiance to obtain the
+# direct clearness index, which shows shaded periods in the
+# solar elevation/azimuth heatmap.
 dni_extra = pvlib.irradiance.get_extra_radiation(data.index)
-ghi_extra = dni_extra * pvlib.tools.cosd(solar_position["zenith"])
 
 fig, ax = solarpy.plotting.plot_shading_heatmap(
-    value=data["ghi"] / ghi_extra,
+    value=data["dni"] / dni_extra,
     solar_azimuth=solar_position["azimuth"],
     solar_elevation=solar_position["elevation"],
     cmap=solarpy.plotting.two_part_colormap(),
     norm=TwoSlopeNorm(vmin=0, vcenter=0.3, vmax=0.8),
-    colorbar_label="Clearness index [-]",
+    colorbar_label="Kn = DNI / TOA [-]",
 )
+
+# %%
+# The grey areas of the heatmap indicate times orientations that never receive direct sunlight,
+# which typically corresponds to shading, such as nearby building vegeations or mountains.
