@@ -643,7 +643,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         axes["corr"].set_xticks(ts_xticks, minor=True)
         axes["corr"].set_xlim(ts_xlim)
     else:
-        ax.set_axis_off()
+        axes["corr"].set_axis_off()
 
     # Plot shading plots
     shading_clabels = ["Kt = GHI / TOA / cos(Z) [-]", "Kn = DNI / TOA [-]"]
