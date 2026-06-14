@@ -115,6 +115,7 @@ sphinx_gallery_conf = {
 
     'subsection_order': [
         '../examples/plots',
+        '../examples/quality',
         '../examples/errors',
     ],
 }
