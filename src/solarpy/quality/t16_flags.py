@@ -1,17 +1,14 @@
-# %%
+"""Combined IEA PVPS Task 16 quality control flags for irradiance data."""
+
 import solarpy
 import numpy as np
-import pvlib
 import pandas as pd
-
-# %%
-component_dict = {"ghi": "GHI", "dhi": "DIF", "dni": "DNI"}
 
 
 def t16_quality_flags(data, altitude=0, horizon=None):
     """Calculate the IEA PVPS Task 16 quality control flags for irradiance data.
 
-    Runs a battery of quality control tests on a time series of GHI, DHI,
+    Apply a series of quality control tests on a time series of GHI, DHI,
     and DNI measurements, combining the BSRN limit tests
     (:func:`bsrn_limits_flag`), the BSRN comparison tests
     (:func:`closure_flag` and :func:`diffuse_fraction_flag`), several
@@ -25,13 +22,8 @@ def t16_quality_flags(data, altitude=0, horizon=None):
 
         - ``"ghi"``, ``"dhi"``, ``"dni"`` : measured irradiance components
           [W/m²]
-        - ``"ghi_extra"``, ``"dni_extra"`` : extraterrestrial irradiance on a
-          horizontal plane and normal to the sun, respectively [W/m²]
-        - ``"solar_zenith"``, ``"solar_azimuth"``, ``"solar_elevation"`` :
-          solar position angles [degrees]
-        - ``"Kn"``, ``"Kt"``, ``"K"`` : beam, global, and diffuse clearness
-          indices, i.e. ``dni / dni_extra``, ``ghi / ghi_extra``, and
-          ``dhi / ghi``, respectively
+        - ``"dni_extra"`` : extraterrestrial irradiance normal to the sun [W/m²]
+        - ``"solar_zenith"``, ``"solar_azimuth"``: solar position angles [degrees]
 
     altitude : float, optional
         Site altitude above sea level [m], used in the ``"flagKn"`` test.
@@ -49,9 +41,9 @@ def t16_quality_flags(data, altitude=0, horizon=None):
         Boolean flags with the same index as *data*. ``True`` indicates the
         observation failed the corresponding test. The columns are:
 
-        - ``"flagphysicalGHI"``, ``"flagphysicalDIF"``, ``"flagphysicalDNI"`` :
+        - ``"flagPPLGHI"``, ``"flagPPLDIF"``, ``"flagPPLDNI"`` :
           BSRN physically possible limit (PPL) test
-        - ``"flagextremeGHI"``, ``"flagextremeDIF"``, ``"flagextremeDNI"`` :
+        - ``"flagERLGHI"``, ``"flagERLDIF"``, ``"flagERLDNI"`` :
           BSRN extremely rare limit (ERL) test
         - ``"flag3lowSZA"``, ``"flag3highSZA"`` : BSRN three-component closure
           test, for solar zenith angle below/above 75°
@@ -67,9 +59,9 @@ def t16_quality_flags(data, altitude=0, horizon=None):
           greater than or equal to ``0.96`` under high-sun, clear-sky
           conditions
         - ``"flagTracker"`` : flagged when GHI and DNI jointly indicate that
-          a sun tracker has lost tracking
+          a sun tracker is not tracking correctly
         - ``"flagHorizon"`` : flagged when the sun is below the horizon
-          profile given by *horizon*, i.e. terrain/obstruction shading.
+          profile given by *horizon*, i.e. far-field shading.
           ``NaN`` for all rows if *horizon* is ``None``.
 
     See Also
@@ -79,13 +71,22 @@ def t16_quality_flags(data, altitude=0, horizon=None):
     diffuse_fraction_flag
     solarpy.horizon.get_horizon_mines
     """
+    cos_sza = np.cos(np.deg2rad(data["solar_zenith"])).clip(lower=0)
+    ghi_extra = data["dni_extra"] * cos_sza
+
+    with np.errstate(divide="ignore", invalid="ignore"):
+        Kt = data["ghi"] / ghi_extra
+        Kn = data["dni"] / data["dni_extra"]
+        K = data["dhi"] / data["ghi"]
+
+    component_dict = {"ghi": "GHI", "dhi": "DIF", "dni": "DNI"}
+
     flags = pd.DataFrame(index=data.index)
     # BSRN LIMITS CHECK
     for component in ["ghi", "dhi", "dni"]:
         for limit_type in ["ppl", "erl"]:
             limit = f"{component}-{limit_type}"
-            flag_dict = {"ppl": "physical", "erl": "extreme"}
-            flag_name = f"flag{flag_dict[limit_type]}{component_dict[component]}"
+            flag_name = f"flag{limit_type.upper()}{component_dict[component]}"
             flags[flag_name] = solarpy.quality.bsrn_limits_flag(
                 data[component],
                 solar_zenith=data["solar_zenith"],
@@ -117,36 +118,33 @@ def t16_quality_flags(data, altitude=0, horizon=None):
 
     # K/Kn/Kt CHECK
     flags["flagKnKt"] = False
-    KnKt_domain = (data["ghi"] > 50) & (data["Kn"] >= 0) & (data["Kt"] > 0)
-    KnKt_condition = data["Kn"] > data["Kt"]
+    KnKt_domain = (data["ghi"] > 50) & (Kn >= 0) & (Kt > 0)
+    KnKt_condition = Kn > Kt
     flags.loc[KnKt_domain & KnKt_condition, "flagKnKt"] = True
 
     # Kn CHECK
     flags["flagKn"] = False
-    Kn_domain = (data["ghi"] > 50) & (data["Kn"] > 0)
-    Kn_condition = data["Kn"] >= ((1100 + 0.03 * altitude) / data["dni_extra"])
+    Kn_domain = (data["ghi"] > 50) & (Kn > 0)
+    Kn_condition = Kn >= ((1100 + 0.03 * altitude) / data["dni_extra"])
     flags.loc[Kn_domain & Kn_condition, "flagKn"] = True
 
     # Kt CHECK
     flags["flagKt"] = False
-    Kt_domain = (data["ghi"] > 50) & (data["Kt"] > 0)
-    Kt_condition = data["Kt"] >= 1.35
+    Kt_domain = (data["ghi"] > 50) & (Kt > 0)
+    Kt_condition = Kt >= 1.35
     flags.loc[Kt_domain & Kt_condition, "flagKt"] = True
 
     # flagKKt CHECK
     flags["flagKKt"] = False
     KKt_domain = (
-        (data["ghi"] > 150)
-        & (data["Kt"] > 0.6)
-        & (data["solar_zenith"] < 85)
-        & (data["K"] > 0)
+        (data["ghi"] > 150) & (Kt > 0.6) & (data["solar_zenith"] < 85) & (K > 0)
     )
-    KKt_condition = data["K"] >= 0.96
+    KKt_condition = K >= 0.96
     flags.loc[KKt_domain & KKt_condition, "flagKKt"] = True
 
     # flagTracker CHECK
     flags["flagTracker"] = False
-    GHI_clear = 0.8 * data["ghi_extra"]
+    GHI_clear = 0.8 * ghi_extra
     DNI_clear = 0.688 * data["dni_extra"]
     tracker_domain = data["solar_zenith"] < 85
     tracker_condition = (
@@ -164,68 +162,11 @@ def t16_quality_flags(data, altitude=0, horizon=None):
         horizon_ts = horizon_ts.clip(lower=0)
 
         flags["flagHorizon"] = False
-        horizon_condition = data["solar_elevation"] < horizon_ts
-        horizon_domain = data["solar_elevation"] > 0
+        horizon_condition = (90 - data["solar_zenith"]) < horizon_ts
+        horizon_domain = (90 - data["solar_zenith"]) > 0
 
         flags.loc[horizon_domain & horizon_condition, "flagHorizon"] = True
     else:
         flags["flagHorizon"] = np.nan
 
     return flags
-
-
-# %%
-
-station = "AIR"
-year = 2020
-
-original_file = f"C:/Users/arajen/OneDrive - Danmarks Tekniske Universitet/IEA_PVPS_T16_Benchmarking/GroundData/{station}/05_final_data/{station}_{year}.csv"
-output_file = f"C:/Users/arajen/Downloads/{station}_{year}.csv"
-
-data, meta = solarpy.iotools.read_t16(original_file, map_variables=True)
-columns_original = list(data.columns)
-
-horizon, meta_horizon = solarpy.horizon.get_horizon_mines(
-    meta["latitude"], meta["longitude"]
-)
-# %%
-solar_position = pvlib.solarposition.get_solarposition(
-    data.index, latitude=meta["latitude"], longitude=meta["longitude"]
-)
-# %%
-data["solar_zenith"] = solar_position["apparent_zenith"]
-data["solar_elevation"] = solar_position["apparent_elevation"]
-data["solar_azimuth"] = solar_position["azimuth"]
-
-data["dni_extra"] = pvlib.irradiance.get_extra_radiation(data.index)
-cos_sza = np.cos(np.deg2rad(data["solar_zenith"])).clip(lower=0)
-data["ghi_extra"] = data["dni_extra"] * cos_sza
-
-# TEMP
-# Extraterrestrial horizontal irradiance
-data["ghi_extra"] = data["dni_extra"] * np.clip(
-    np.cos(np.deg2rad(data["solar_zenith"])), a_min=0, a_max=None
-)
-
-
-data["Kt"] = data["ghi"] / data["ghi_extra"]
-data["Kn"] = data["dni"] / data["dni_extra"]
-data["Kd"] = data["dhi"] / data["ghi_extra"]
-data["K"] = data["dhi"] / data["ghi"]
-
-flags = t16_quality_flags(data, altitude=meta["altitude"], horizon=horizon)
-### data_output = flags.
-
-flag_columns = [c for c in data.columns if c.startswith("flag")]
-pd.DataFrame([data[flag_columns].sum(), data_output[flag_columns].sum()]).astype(int)
-
-# %%
-data_output = data_output[columns_original].rename(
-    columns={"ghi": "GHI", "dni": "DNI", "dhi": "DIF"}
-)
-
-bool_cols = data_output.select_dtypes(include="bool").columns
-data_output[bool_cols] = data_output[bool_cols].astype(int)
-data_output.to_csv(output_file, index=False)
-
-# %%
