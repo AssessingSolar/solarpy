@@ -28,20 +28,13 @@ View the source code, report issues, and contribute to the project on GitHub.
 :::
 ::::
 
-## Contributing
-Contributions to the repository, e.g., bug fixes, feature request are more than welcome!
-
-
-## License
-[BSD 3-clause](https://github.com/assessingsolar/solarpy/blob/main/LICENSE).
-
 
 ```{toctree}
 :maxdepth: 1
 :hidden:
 
-installation
-documentation
+user_guide/index
+api/index
 gallery/index
 whatsnew
 ```
