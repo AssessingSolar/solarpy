@@ -145,6 +145,7 @@ def _fetch_dmi_data(
     parameter_id: str | None,
     time_resolution: str,
     url: str,
+    endpoint: str,
     **kwargs,
 ) -> list[dict]:
     """Fetch all pages for a single parameter (or all parameters if None)."""
@@ -160,21 +161,17 @@ def _fetch_dmi_data(
     if time_resolution is not None:
         params["timeResolution"] = time_resolution
 
-    if 'metObs' in url:
-        endpoint = url + "collections/observation/items"
-    else:
-        endpoint = url + "collections/stationValue/items"
-
     records: list[dict] = []
     offset = 0
 
     while True:
         params["offset"] = offset
-        res = requests.get(endpoint, params=params, **kwargs)
+        res = requests.get(url + endpoint, params=params, **kwargs)
         _raise_for_status(res)
         body = res.json()
         for feat in body.get("features", []):
             props = feat["properties"]
+
             if 'metObs' in url:
                 records.append(
                     {
@@ -191,6 +188,7 @@ def _fetch_dmi_data(
                         "value": props["value"],
                     }
                 )
+
         if body.get("numberReturned", 0) < LIMIT:
             break
         offset += LIMIT
@@ -295,6 +293,7 @@ def get_dmi_climate_station_data(
                 pid,
                 time_resolution,
                 url,
+                endpoint="collections/stationValue/items",
                 **kwargs,
             )
         )
@@ -414,6 +413,7 @@ def get_dmi_metobs(
                 pid,
                 time_resolution,
                 url,
+                endpoint="collections/observation/items",
                 **kwargs,
             )
         )
