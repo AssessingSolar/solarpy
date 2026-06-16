@@ -3,17 +3,26 @@ from __future__ import annotations
 import pandas as pd
 import requests
 
-URL = "https://opendataapi.dmi.dk/v2/climateData/"
+URL_CLIMATE_DATA = "https://opendataapi.dmi.dk/v2/climateData/"
+URL_METOBS = "https://opendataapi.dmi.dk/v2/metObs/"
 LIMIT = 300_000
 
 # Maps DMI parameter IDs to pvlib/solarpy standard variable names.
-VARIABLE_MAP = {
+VARIABLE_MAP_CLIMATE_DATA = {
     "mean_radiation": "ghi",
     "mean_temp": "temp_air",
     "mean_wind_speed": "wind_speed",
     "mean_wind_dir": "wind_direction",
     "mean_relative_hum": "relative_humidity",
     "mean_pressure": "pressure",
+}
+
+VARIABLE_MAP_METOBS = {
+    "temp_dry": "temp_air",
+    "radia_glob": "ghi",
+    "wind_dir": "wind_direction",
+    "rel_hum": "relative_humidity",
+    "pressure": "pressure",
 }
 
 # Maps pandas frequency aliases to DMI timeResolution values.
@@ -64,23 +73,25 @@ def _raise_for_status(res):
 
 def get_dmi_station_meta(
     station: str,
+    url: str = URL_METOBS,
     entry_no: int = -1,
-    url: str = URL,
     **kwargs,
 ) -> dict:
     """
-    Retrieve metadata for a DMI climate station.
+    Retrieve metadata for a DMI station.
 
     Parameters
     ----------
     station : str
         DMI station identifier, e.g. ``'06180'`` for Copenhagen Airport.
+    url : str,
+        Base URL for the DMI API:
+        - For the Climate Data API: ``https://opendataapi.dmi.dk/v2/climateData/``
+        - For the Meteorological Observations API: ``https://opendataapi.dmi.dk/v2/metObs/``
     entry_no : int, default -1
         Index into the list of station entries returned by the API. The
         default of ``-1`` selects the most recent entry, which is appropriate
         for stations that have been relocated over time.
-    url : str, optional
-        Base URL for the DMI Climate Data API.
     **kwargs
         Additional keyword arguments forwarded to :func:`requests.get`,
         e.g. ``timeout=30``.
@@ -95,6 +106,8 @@ def get_dmi_station_meta(
     -----
     The DMI Climate Data API is documented at
     https://www.dmi.dk/friedata/dokumentation/apis/climate-data-api-1.
+    The Meteorological Observations (metObs) API is documented at
+    https://www.dmi.dk/friedata/dokumentation/meteorological-observation-api.
     A list of stations can be found at
     https://www.dmi.dk/friedata/dokumentation/data/climate-data-stations.
 
@@ -132,6 +145,7 @@ def _fetch_dmi_data(
     parameter_id: str | None,
     time_resolution: str,
     url: str,
+    endpoint: str,
     **kwargs,
 ) -> list[dict]:
     """Fetch all pages for a single parameter (or all parameters if None)."""
@@ -141,27 +155,40 @@ def _fetch_dmi_data(
         "timeResolution": time_resolution,
         "limit": LIMIT,
     }
-    if parameter_id != [None]:
+    if parameter_id is not None:
         params["parameterId"] = parameter_id
 
-    endpoint = url + "collections/stationValue/items"
+    if time_resolution is not None:
+        params["timeResolution"] = time_resolution
+
     records: list[dict] = []
     offset = 0
 
     while True:
         params["offset"] = offset
-        res = requests.get(endpoint, params=params, **kwargs)
+        res = requests.get(url + endpoint, params=params, **kwargs)
         _raise_for_status(res)
         body = res.json()
         for feat in body.get("features", []):
             props = feat["properties"]
-            records.append(
-                {
-                    "timestamp": props["from"],
-                    "parameterId": props["parameterId"],
-                    "value": props["value"],
-                }
-            )
+
+            if 'metObs' in url:
+                records.append(
+                    {
+                        "timestamp": props["observed"],
+                        "parameterId": props["parameterId"],
+                        "value": props["value"],
+                    }
+                )
+            else:
+                records.append(
+                    {
+                        "timestamp": props["from"],
+                        "parameterId": props["parameterId"],
+                        "value": props["value"],
+                    }
+                )
+
         if body.get("numberReturned", 0) < LIMIT:
             break
         offset += LIMIT
@@ -176,7 +203,7 @@ def get_dmi_climate_station_data(
     parameters: str | list[str] | None = None,
     time_resolution: str = "hour",
     map_variables: bool = True,
-    url: str = URL,
+    url: str = URL_CLIMATE_DATA,
     **kwargs,
 ) -> tuple[pd.DataFrame, dict]:
     """
@@ -252,8 +279,9 @@ def get_dmi_climate_station_data(
 
     if parameters is None or isinstance(parameters, str):
         parameters = [parameters]
+
     # allow for passing in standard pvlib/solarpy names
-    reverse_variable_map = {v: k for k, v in VARIABLE_MAP.items()}
+    reverse_variable_map = {v: k for k, v in VARIABLE_MAP_CLIMATE_DATA.items()}
     parameters = [reverse_variable_map.get(p, p) for p in parameters]
 
     records: list[dict] = []
@@ -265,12 +293,12 @@ def get_dmi_climate_station_data(
                 pid,
                 time_resolution,
                 url,
+                endpoint="collections/stationValue/items",
                 **kwargs,
             )
         )
 
     if records:
-
         df = pd.DataFrame(records)
         df["timestamp"] = pd.to_datetime(df["timestamp"])
         data = df.pivot_table(
@@ -278,8 +306,127 @@ def get_dmi_climate_station_data(
         )
 
         if map_variables:
-            data = data.rename(columns=VARIABLE_MAP)
+            data = data.rename(columns=VARIABLE_MAP_CLIMATE_DATA)
+    else:
+        data = pd.DataFrame()
 
+    meta = get_dmi_station_meta(station, url=url, **kwargs)
+
+    return data, meta
+
+
+def get_dmi_metobs(
+    station: str,
+    start,
+    end,
+    parameters: str | list[str] | None = None,
+    map_variables: bool = True,
+    url: str = URL_METOBS,
+    **kwargs,
+) -> tuple[pd.DataFrame, dict]:
+    """
+    Retrieve meteorological observations from DMI's metObs API.
+
+    The Danish Meteorological Institute (DMI) operates automatic
+    weather stations in Denmark and Greenland.
+
+    Unlike :func:`get_dmi_climate_station_data`, the data returned here is
+    neither quality-controlled nor aggregated. Observations are typically
+    available at 10-minute or hourly resolution depending on the parameter.
+    Data is available from 1953 onwards, though not all parameters are
+    available for all stations throughout this period.
+
+    Parameters
+    ----------
+    station : str
+        DMI station identifier, e.g. ``'06180'`` for Copenhagen Airport.
+    start : datetime-like
+        First timestamp of the requested period (inclusive). Timezone-naive
+        values are assumed to be UTC.
+    end : datetime-like
+        Last timestamp of the requested period (inclusive). Timezone-naive
+        values are assumed to be UTC.
+    parameters : str or list of str, optional
+        DMI parameter identifiers to retrieve, e.g. ``'temp_dry'`` or
+        ``['temp_dry', 'wind_speed']``. If no value is passed, all
+        available parameters for the station are returned. Note, that the
+        parameter naming convention differs from DMI's climate data API.
+    map_variables : bool, default True
+        Whether to rename column names from DMI parameter IDs to
+        standard pvlib variable names. Parameters without a mapping are
+        not renamed.
+    url : str, optional
+        Base URL for the DMI metObs API.
+    **kwargs
+        Additional keyword arguments forwarded to :func:`requests.get`,
+        e.g. ``timeout=30``.
+
+    Returns
+    -------
+    data : pd.DataFrame
+        Time series with a :class:`~pandas.DatetimeIndex`. For hourly data
+        the timezone is set to UTC.
+    meta : dict
+        Station metadata with keys ``'station_id'``, ``'name'``,
+        ``'latitude'``, ``'longitude'``, ``'altitude'``, and ``'country'``.
+
+    Notes
+    -----
+    The DMI metObs API is documented at
+    https://www.dmi.dk/friedata/dokumentation/meteorological-observation-api.
+    Data availability and available parameters vary by station.
+
+    A list of stations can be found here:
+    https://www.dmi.dk/friedata/dokumentation/data/climate-data-stations.
+
+    Examples
+    --------
+    Retrieve ambient temperature and irradiance for
+    the Sjælsmark station north of Copenhagen:
+
+    >>> import solarpy
+    >>> data, meta = solarpy.iotools.get_dmi_metobs(
+    ...     station='06188',  # Sjælsmark station id
+    ...     start='2023-06-01',
+    ...     end='2023-06-30',
+    ...     parameters=['temp_dry', 'radia_glob'],
+    ...     timeout=30,
+    ... )
+    """
+    datetime_interval = _format_datetime_interval(start, end)
+
+    if parameters is None or isinstance(parameters, str):
+        parameters = [parameters]
+
+    # allow for passing in standard pvlib/solarpy names
+    reverse_metobs_variable_map = {v: k for k, v in VARIABLE_MAP_METOBS.items()}
+    parameters = [reverse_metobs_variable_map.get(p, p) for p in parameters]
+
+    time_resolution = None  # metObs API does not require time resolution parameter
+
+    records: list[dict] = []
+    for pid in parameters:
+        records.extend(
+            _fetch_dmi_data(
+                station,
+                datetime_interval,
+                pid,
+                time_resolution,
+                url,
+                endpoint="collections/observation/items",
+                **kwargs,
+            )
+        )
+
+    if records:
+        df = pd.DataFrame(records)
+        df["timestamp"] = pd.to_datetime(df["timestamp"])
+        data = df.pivot_table(
+            index="timestamp", columns="parameterId", values="value", aggfunc="first"
+        )
+
+        if map_variables:
+            data = data.rename(columns=VARIABLE_MAP_METOBS)
     else:
         data = pd.DataFrame()
 
