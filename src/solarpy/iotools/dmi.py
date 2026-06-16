@@ -73,7 +73,7 @@ def _raise_for_status(res):
 
 def get_dmi_station_meta(
     station: str,
-    url: str,
+    url: str = URL_METOBS,
     entry_no: int = -1,
     **kwargs,
 ) -> dict:
