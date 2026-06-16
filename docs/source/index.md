@@ -9,7 +9,7 @@
 :::{grid-item-card}  Quality tests
 :link: api/quality
 :link-type: doc
-Run BSRN limit checks, comparison tests, and other quality control routines on irradiance data.
+Apply automatic quality checks to solar irradiance measurements.
 :::
 :::{grid-item-card}  Plotting
 :link: api/plotting
@@ -22,9 +22,9 @@ Visualize irradiance data using heatmaps, scatter plots, multiplots, and more.
 View the source code, report issues, and contribute to the project on GitHub.
 :::
 :::{grid-item-card}  Visual QC
-:link: gallery/quality_checks/index
+:link: gallery/quality/index
 :link-type: doc
-Explore examples of visually inspecting irradiance data for quality issues.
+Explore examples of how to visually inspect irradiance data for quality issues.
 :::
 ::::
 
