@@ -1,12 +1,12 @@
 # solarpy
 
-`solarpy` is a Python package for working with solar resource data, including quality assessment, plotting, and more.
+`solarpy` is a Python package for working with solar resource data. The package includes automatic quality checks and visual quality control (QC) tools for identifying and flagging solar irradiance measurements.
 
 
 ::::{grid} 1 2 2 2
 :gutter: 4
 
-:::{grid-item-card}  Quality tests
+:::{grid-item-card}  Quality checks
 :link: api/quality
 :link-type: doc
 Apply automatic quality checks to solar irradiance measurements.
@@ -16,15 +16,15 @@ Apply automatic quality checks to solar irradiance measurements.
 :link-type: doc
 Visualize irradiance data using heatmaps, scatter plots, multiplots, and more.
 :::
+:::{grid-item-card}  Visual QC
+:link: gallery/index
+:link-type: doc
+Explore examples of how to visually inspect irradiance data for quality issues.
+:::
 :::{grid-item-card}  GitHub
 :link: https://github.com/AssessingSolar/solarpy
 :link-type: url
 View the source code, report issues, and contribute to the project on GitHub.
-:::
-:::{grid-item-card}  Visual QC
-:link: gallery/quality/index
-:link-type: doc
-Explore examples of how to visually inspect irradiance data for quality issues.
 :::
 ::::
 
