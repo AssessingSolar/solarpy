@@ -8,7 +8,7 @@ URL_METOBS = "https://opendataapi.dmi.dk/v2/metObs/"
 LIMIT = 300_000
 
 # Maps DMI parameter IDs to pvlib/solarpy standard variable names.
-VARIABLE_MAP = {
+VARIABLE_MAP_CLIMATE_DATA = {
     "mean_radiation": "ghi",
     "mean_temp": "temp_air",
     "mean_wind_speed": "wind_speed",
@@ -17,7 +17,7 @@ VARIABLE_MAP = {
     "mean_pressure": "pressure",
 }
 
-METOBS_VARIABLE_MAP = {
+VARIABLE_MAP_METOBS = {
     "temp_dry": "temp_air",
     "radia_glob": "ghi",
     "wind_dir": "wind_direction",
@@ -281,7 +281,7 @@ def get_dmi_climate_station_data(
         parameters = [parameters]
 
     # allow for passing in standard pvlib/solarpy names
-    reverse_variable_map = {v: k for k, v in VARIABLE_MAP.items()}
+    reverse_variable_map = {v: k for k, v in VARIABLE_MAP_CLIMATE_DATA.items()}
     parameters = [reverse_variable_map.get(p, p) for p in parameters]
 
     records: list[dict] = []
@@ -306,7 +306,7 @@ def get_dmi_climate_station_data(
         )
 
         if map_variables:
-            data = data.rename(columns=VARIABLE_MAP)
+            data = data.rename(columns=VARIABLE_MAP_CLIMATE_DATA)
     else:
         data = pd.DataFrame()
 
@@ -399,7 +399,7 @@ def get_dmi_metobs(
         parameters = [parameters]
 
     # allow for passing in standard pvlib/solarpy names
-    reverse_metobs_variable_map = {v: k for k, v in METOBS_VARIABLE_MAP.items()}
+    reverse_metobs_variable_map = {v: k for k, v in VARIABLE_MAP_METOBS.items()}
     parameters = [reverse_metobs_variable_map.get(p, p) for p in parameters]
 
     time_resolution = None  # metObs API does not require time resolution parameter
@@ -426,7 +426,7 @@ def get_dmi_metobs(
         )
 
         if map_variables:
-            data = data.rename(columns=METOBS_VARIABLE_MAP)
+            data = data.rename(columns=VARIABLE_MAP_METOBS)
     else:
         data = pd.DataFrame()
 
