@@ -33,8 +33,11 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',  # parsing of Numpy docstrings
     'sphinx_copybutton',  # add copy button to code examples
+    'sphinx_design',  # grid layouts and cards
     'sphinx_gallery.gen_gallery',  # build the example gallery
 ]
+
+myst_enable_extensions = ["colon_fence"]  # for sphinx-design
 
 autodoc_typehints = "description"  # only show type hints in parameter description
 
