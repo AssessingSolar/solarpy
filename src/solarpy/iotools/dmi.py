@@ -154,10 +154,10 @@ def _fetch_dmi_data(
         "timeResolution": time_resolution,
         "limit": LIMIT,
     }
-    if parameter_id != None:
+    if parameter_id is not None:
         params["parameterId"] = parameter_id
-    
-    if time_resolution != None:
+
+    if time_resolution is not None:
         params["timeResolution"] = time_resolution
 
     if 'metObs' in url:
@@ -176,13 +176,13 @@ def _fetch_dmi_data(
         for feat in body.get("features", []):
             props = feat["properties"]
             if 'metObs' in url:
-                    records.append(
-                        {
-                            "timestamp": props["observed"],
-                            "parameterId": props["parameterId"],
-                            "value": props["value"],
-                        }
-                    )
+                records.append(
+                    {
+                        "timestamp": props["observed"],
+                        "parameterId": props["parameterId"],
+                        "value": props["value"],
+                    }
+                )
             else:
                 records.append(
                     {
@@ -281,6 +281,7 @@ def get_dmi_climate_station_data(
 
     if parameters is None or isinstance(parameters, str):
         parameters = [parameters]
+
     # allow for passing in standard pvlib/solarpy names
     reverse_variable_map = {v: k for k, v in VARIABLE_MAP.items()}
     parameters = [reverse_variable_map.get(p, p) for p in parameters]
@@ -299,7 +300,6 @@ def get_dmi_climate_station_data(
         )
 
     if records:
-
         df = pd.DataFrame(records)
         df["timestamp"] = pd.to_datetime(df["timestamp"])
         data = df.pivot_table(
@@ -308,7 +308,6 @@ def get_dmi_climate_station_data(
 
         if map_variables:
             data = data.rename(columns=VARIABLE_MAP)
-
     else:
         data = pd.DataFrame()
 
@@ -399,7 +398,7 @@ def get_dmi_metobs(
 
     if parameters is None or isinstance(parameters, str):
         parameters = [parameters]
-    
+
     # allow for passing in standard pvlib/solarpy names
     reverse_metobs_variable_map = {v: k for k, v in METOBS_VARIABLE_MAP.items()}
     parameters = [reverse_metobs_variable_map.get(p, p) for p in parameters]
@@ -420,7 +419,6 @@ def get_dmi_metobs(
         )
 
     if records:
-
         df = pd.DataFrame(records)
         df["timestamp"] = pd.to_datetime(df["timestamp"])
         data = df.pivot_table(
@@ -429,7 +427,6 @@ def get_dmi_metobs(
 
         if map_variables:
             data = data.rename(columns=METOBS_VARIABLE_MAP)
-
     else:
         data = pd.DataFrame()
 
