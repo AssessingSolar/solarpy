@@ -25,6 +25,7 @@ fig, ax = solarpy.plotting.plot_intraday_heatmap(
     time=data.index,
     values=data["ghi"],
     colorbar_label="GHI [W/m²]",
+    time_resolution=1,  # frequency of timesteps in minutes
 )
 fig.tight_layout()
 

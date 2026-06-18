@@ -50,7 +50,9 @@ def test_nh_xlim(az_el_val):
 
 def test_sh_tick_labels(az_el_val):
     az, el, val = az_el_val
-    _, ax = solarpy.plotting.plot_shading_heatmap(val, az, el, northern_hemisphere=False)
+    _, ax = solarpy.plotting.plot_shading_heatmap(
+        val, az, el, northern_hemisphere=False
+    )
     labels = [t.get_text() for t in ax.get_xticklabels()]
     assert labels == ["S", "W", "N", "E", "S"]
 
@@ -61,7 +63,9 @@ def test_sh_lim():
     az = np.concatenate([rng.uniform(310, 360, n // 2), rng.uniform(0, 50, n // 2)])
     el = rng.uniform(0, 60, n)
     val = np.sin(np.radians(el)) * 1000
-    _, ax = solarpy.plotting.plot_shading_heatmap(val, az, el, northern_hemisphere=False)
+    _, ax = solarpy.plotting.plot_shading_heatmap(
+        val, az, el, northern_hemisphere=False
+    )
     assert ax.get_xlim() == (-180, 180)
     assert ax.get_ylim() == (0, 60)
 
@@ -69,6 +73,13 @@ def test_sh_lim():
 def test_colorbar_present(az_el_val):
     az, el, val = az_el_val
     fig, _ = solarpy.plotting.plot_shading_heatmap(val, az, el, colorbar=True)
+    assert len(fig.axes) == 2
+
+
+def test_time_resolution(az_el_val):
+    # A very basic test that time_resolution parameter can be passed without error.
+    az, el, val = az_el_val
+    fig, _ = solarpy.plotting.plot_shading_heatmap(val, az, el, time_resolution=1)
     assert len(fig.axes) == 2
 
 
