@@ -123,7 +123,7 @@ fig.tight_layout()
 
 data_1h = data.resample("1H").mean()
 
-_ = solarpy.plotting.plot_intraday_heatmap(
+fig, ax = solarpy.plotting.plot_intraday_heatmap(
     time=data_1h.index,
     values=data_1h["ghi"],
     time_resolution=60,  # 60 minutes = 1 hour
