@@ -131,3 +131,5 @@ _ = solarpy.plotting.plot_intraday_heatmap(
     norm=norm,
     colorbar_label="GHI [W/m²]",
 )
+
+fig.tight_layout()
