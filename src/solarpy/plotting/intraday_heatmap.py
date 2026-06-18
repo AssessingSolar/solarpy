@@ -78,8 +78,8 @@ def plot_intraday_heatmap(
     When multiple values fall in the same bin their mean is displayed.
     Missing bin/date combinations are shown as white cells.
 
-    The y-axis runs from midnight (00:00) at the bottom to 23:59 at the
-    top (for 1-minute resolution). X-axis tick density adapts to the date
+    The y-axis runs from midnight (00:00) at the bottom to the following midnight at the
+    top, labelled in hours, with ticks every 3 hours. X-axis tick density adapts to the date
     range: daily labels for short ranges, weekly or monthly for longer ones.
 
     Examples
@@ -111,9 +111,11 @@ def plot_intraday_heatmap(
             f"time and values must have the same length, "
             f"got {len(time)} and {len(values)}."
         )
-    # The smallest resolution currently supported is 1min
-    if 1440 % resolution != 0:
-        raise ValueError(f"resolution must evenly divide 1440, got {resolution}.")
+    # The smallest time_resolution currently supported is 1min
+    if 1440 % time_resolution != 0:
+        raise ValueError(
+            f"time_resolution must evenly divide 1440, got {time_resolution}."
+        )
 
     n_bins = 1440 // resolution
 
@@ -155,9 +157,12 @@ def plot_intraday_heatmap(
     x_edges = mdates.date2num(all_dates.astype("datetime64[ms]").astype(object))
     x_edges = np.append(x_edges, x_edges[-1] + 1)
 
+    # Should be in hours
+    y_edges = np.arange(n_bins + 1) * time_resolution / 60
+
     mesh = ax.pcolormesh(
         x_edges,
-        np.arange(n_bins + 1),
+        y_edges,
         matrix,
         cmap=cmap,
         norm=norm,
@@ -184,12 +189,8 @@ def plot_intraday_heatmap(
     # ------------------------------------------------------------------ #
     # Y-axis — time of day (HH), ticks every 3 hours, midnight at bottom #
     # ------------------------------------------------------------------ #
-    bins_per_hour = 3 * 60 // resolution
-    tick_bins = np.arange(0, n_bins, bins_per_hour)
-    ax.set_yticks(tick_bins + 0.5)
-    ax.set_yticklabels(
-        [f"{(b * resolution) // 60:02d}" for b in tick_bins],
-    )
-    ax.set_ylabel("Time of day")
+    tick_hours = np.arange(0, 24, 3)
+    ax.set_yticks(tick_hours)
+    ax.set_ylabel("Time of day [h]")
 
     return fig, ax

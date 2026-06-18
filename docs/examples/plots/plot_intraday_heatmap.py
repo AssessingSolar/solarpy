@@ -89,13 +89,18 @@ sun_rise_set = pvlib.solarposition.sun_rise_set_transit_spa(
     meta["latitude"],
     meta["longitude"],
 )
-sun_rise_minutes = (
-    sun_rise_set["sunrise"].dt.hour * 60 + sun_rise_set["sunrise"].dt.minute
-)
-sun_set_minutes = sun_rise_set["sunset"].dt.hour * 60 + sun_rise_set["sunset"].dt.minute
 
-ax.plot(sun_rise_minutes, c="r", linestyle="dashed", lw=1.5, alpha=0.7)
-ax.plot(sun_set_minutes, c="r", linestyle="dashed", lw=1.5, alpha=0.7)
+sunrise = (
+    sun_rise_set["sunrise"] - sun_rise_set["sunrise"].index.normalize()
+).dt.total_seconds() / 3600
+
+sunset = (
+    sun_rise_set["sunset"] - sun_rise_set["sunset"].index.normalize()
+).dt.total_seconds() / 3600
+
+
+ax.plot(sunrise, c="r", linestyle="dashed", lw=1.5, alpha=0.7)
+ax.plot(sunset, c="r", linestyle="dashed", lw=1.5, alpha=0.7)
 
 fig.tight_layout()
 
