@@ -196,7 +196,8 @@ def plot_intraday_heatmap(
     # Y-axis — time of day (HH), ticks every 3 hours, midnight at bottom #
     # ------------------------------------------------------------------ #
     tick_hours = np.arange(0, 24, 3)
-    ax.set_yticks(tick_hours)
+    ax.set_yticks([f"t:{t:02d}" for t in tick_hours])
     ax.set_ylabel("Time of day [h]")
+    ax.set_ylim(0, 24)
 
     return fig, ax
