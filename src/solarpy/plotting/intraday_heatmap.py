@@ -13,7 +13,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 def plot_intraday_heatmap(
     time: Any,
     values: Any,
-    time_resolution: int = 1,
+    time_resolution: int | str = "infer",
     cmap: str = "viridis",
     norm=None,
     plot_colorbar=True,
@@ -36,10 +36,11 @@ def plot_intraday_heatmap(
     values : array-like of float
         Observed values, one per timestamp. Must be the same length as
         *time*.
-    time_resolution : int, optional
-        Bin size in minutes. Must evenly divide 1440. Default is ``1``
-        (one row per minute). Use ``10`` for 10-minute bins, ``60`` for
-        hourly bins, etc.
+    time_resolution : int or ``"infer"``, optional
+        Bin size in minutes. Must evenly divide 1440. When ``"infer"``
+        (default), the resolution is estimated from the median difference
+        between consecutive timestamps. Use ``10`` for 10-minute bins,
+        ``60`` for hourly bins, etc.
     cmap : str, optional
         Matplotlib colormap name. Default is ``"viridis"``.
     norm : matplotlib.colors.Normalize, optional
@@ -111,6 +112,11 @@ def plot_intraday_heatmap(
             f"time and values must have the same length, "
             f"got {len(time)} and {len(values)}."
         )
+    if time_resolution == "infer":
+        time_resolution = int(
+            np.median(np.diff(np.sort(time)).astype("timedelta64[m]").astype(int))
+        )
+
     # The smallest time_resolution currently supported is 1min
     if 1440 % time_resolution != 0:
         raise ValueError(

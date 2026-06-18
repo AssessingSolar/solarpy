@@ -111,3 +111,25 @@ fig.tight_layout()
 # custom colorbar makes it possible to quickly identify the magnitude of the nighttime
 # thermal offsets, which in this example has quite some values in the range of -2 to
 # -6 W/m², but no values below -6 W/m².
+
+# %%
+# Timestamp resolution
+# --------------------
+#
+# The plotting function by default attempts to infer the time resolution
+# of the data. If there is mixed timesteps, it is possible to override
+# this paramter by setting the ``time_resolution`` parameter.
+# The example below plots hourly data.
+
+data_1h = data.resample("1H").mean()
+
+fig, ax = solarpy.plotting.plot_intraday_heatmap(
+    time=data_1h.index,
+    values=data_1h["ghi"],
+    time_resolution=60,  # 60 minutes = 1 hour
+    cmap=cmap,
+    norm=norm,
+    colorbar_label="GHI [W/m²]",
+)
+
+fig.tight_layout()
