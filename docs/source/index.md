@@ -6,7 +6,7 @@
 ::::{grid} 1 2 2 2
 :gutter: 4
 
-:::{grid-item-card}  Quality checks
+:::{grid-item-card}  Quality check functions
 :link: api/quality
 :link-type: doc
 Apply automatic quality checks to solar irradiance measurements.
@@ -16,7 +16,7 @@ Apply automatic quality checks to solar irradiance measurements.
 :link-type: doc
 Visualize irradiance data using heatmaps, scatter plots, multiplots, and more.
 :::
-:::{grid-item-card}  Visual QC
+:::{grid-item-card}  Guide to quality assessment
 :link: gallery/index
 :link-type: doc
 Explore examples of how to visually inspect irradiance data for quality issues.
@@ -28,20 +28,13 @@ View the source code, report issues, and contribute to the project on GitHub.
 :::
 ::::
 
-## Contributing
-Contributions to the repository, e.g., bug fixes, feature request are more than welcome!
-
-
-## License
-[BSD 3-clause](https://github.com/assessingsolar/solarpy/blob/main/LICENSE).
-
 
 ```{toctree}
 :maxdepth: 1
 :hidden:
 
-installation
-documentation
+user_guide/index
+api/index
 gallery/index
 whatsnew
 ```

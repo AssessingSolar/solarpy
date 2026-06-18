@@ -25,6 +25,7 @@ fig, ax = solarpy.plotting.plot_intraday_heatmap(
     time=data.index,
     values=data["ghi"],
     colorbar_label="GHI [W/m²]",
+    time_resolution=1,  # frequency of timesteps in minutes
 )
 fig.tight_layout()
 
@@ -89,13 +90,18 @@ sun_rise_set = pvlib.solarposition.sun_rise_set_transit_spa(
     meta["latitude"],
     meta["longitude"],
 )
-sun_rise_minutes = (
-    sun_rise_set["sunrise"].dt.hour * 60 + sun_rise_set["sunrise"].dt.minute
-)
-sun_set_minutes = sun_rise_set["sunset"].dt.hour * 60 + sun_rise_set["sunset"].dt.minute
 
-ax.plot(sun_rise_minutes, c="r", linestyle="dashed", lw=1.5, alpha=0.7)
-ax.plot(sun_set_minutes, c="r", linestyle="dashed", lw=1.5, alpha=0.7)
+sunrise = (
+    sun_rise_set["sunrise"] - sun_rise_set["sunrise"].index.normalize()
+).dt.total_seconds() / 3600
+
+sunset = (
+    sun_rise_set["sunset"] - sun_rise_set["sunset"].index.normalize()
+).dt.total_seconds() / 3600
+
+
+ax.plot(sunrise, c="r", linestyle="dashed", lw=1.5, alpha=0.7)
+ax.plot(sunset, c="r", linestyle="dashed", lw=1.5, alpha=0.7)
 
 fig.tight_layout()
 
@@ -105,3 +111,25 @@ fig.tight_layout()
 # custom colorbar makes it possible to quickly identify the magnitude of the nighttime
 # thermal offsets, which in this example has quite some values in the range of -2 to
 # -6 W/m², but no values below -6 W/m².
+
+# %%
+# Timestamp resolution
+# --------------------
+#
+# The plotting function by default attempts to infer the time resolution
+# of the data. If there is mixed timesteps, it is possible to override
+# this paramter by setting the ``time_resolution`` parameter.
+# The example below plots hourly data.
+
+data_1h = data.resample("1H").mean()
+
+fig, ax = solarpy.plotting.plot_intraday_heatmap(
+    time=data_1h.index,
+    values=data_1h["ghi"],
+    time_resolution=60,  # 60 minutes = 1 hour
+    cmap=cmap,
+    norm=norm,
+    colorbar_label="GHI [W/m²]",
+)
+
+fig.tight_layout()

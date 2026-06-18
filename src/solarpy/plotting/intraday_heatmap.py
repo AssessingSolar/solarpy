@@ -13,7 +13,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 def plot_intraday_heatmap(
     time: Any,
     values: Any,
-    resolution: int = 1,
+    time_resolution: int | str = "infer",
     cmap: str = "viridis",
     norm=None,
     plot_colorbar=True,
@@ -24,7 +24,7 @@ def plot_intraday_heatmap(
     """Plot a heatmap of intraday time series data.
 
     Each column of the heatmap represents one calendar date; each row
-    represents one time bin of *resolution* minutes. Cell colour encodes
+    represents one time bin of *time_resolution* minutes. Cell colour encodes
     the mean of *values* falling in that date and bin. Dates with no data
     are included as all-NaN columns so the time axis is always contiguous.
 
@@ -36,10 +36,11 @@ def plot_intraday_heatmap(
     values : array-like of float
         Observed values, one per timestamp. Must be the same length as
         *time*.
-    resolution : int, optional
-        Bin size in minutes. Must evenly divide 1440. Default is ``1``
-        (one row per minute). Use ``10`` for 10-minute bins, ``60`` for
-        hourly bins, etc.
+    time_resolution : int or ``"infer"``, optional
+        Bin size in minutes. Must evenly divide 1440. When ``"infer"``
+        (default), the resolution is estimated from the median difference
+        between consecutive timestamps. Use ``10`` for 10-minute bins,
+        ``60`` for hourly bins, etc.
     cmap : str, optional
         Matplotlib colormap name. Default is ``"viridis"``.
     norm : matplotlib.colors.Normalize, optional
@@ -71,15 +72,15 @@ def plot_intraday_heatmap(
     ------
     ValueError
         If *time* and *values* have different lengths, if either is empty,
-        or if *resolution* does not evenly divide 1440.
+        or if *time_resolution* does not evenly divide 1440.
 
     Notes
     -----
     When multiple values fall in the same bin their mean is displayed.
     Missing bin/date combinations are shown as white cells.
 
-    The y-axis runs from midnight (00:00) at the bottom to 23:59 at the
-    top (for 1-minute resolution). X-axis tick density adapts to the date
+    The y-axis runs from midnight (00:00) at the bottom to the following midnight at the
+    top, labelled in hours, with ticks every 3 hours. X-axis tick density adapts to the date
     range: daily labels for short ranges, weekly or monthly for longer ones.
 
     Examples
@@ -101,7 +102,7 @@ def plot_intraday_heatmap(
     >>> time = pd.Timestamp("2024-01-01") + pd.to_timedelta(mins, unit='min')
     >>> values = np.random.randn(len(mins))
     >>> fig, ax = solarpy.plotting.plot_intraday_heatmap(
-    ...     time, values, resolution=10)
+    ...     time, values, time_resolution=10)
     """
     time = np.asarray(time, dtype="datetime64[ns]")
     values = np.asarray(values, dtype=float)
@@ -111,18 +112,25 @@ def plot_intraday_heatmap(
             f"time and values must have the same length, "
             f"got {len(time)} and {len(values)}."
         )
-    # The smallest resolution currently supported is 1min
-    if 1440 % resolution != 0:
-        raise ValueError(f"resolution must evenly divide 1440, got {resolution}.")
+    if time_resolution == "infer":
+        time_resolution = int(
+            np.median(np.diff(np.sort(time)).astype("timedelta64[m]").astype(int))
+        )
 
-    n_bins = 1440 // resolution
+    # The smallest time_resolution currently supported is 1min
+    if 1440 % time_resolution != 0:
+        raise ValueError(
+            f"time_resolution must evenly divide 1440, got {time_resolution}."
+        )
+
+    n_bins = 1440 // time_resolution
 
     # ------------------------------------------------------------------ #
     # Extract date and bin index                                         #
     # ------------------------------------------------------------------ #
     dates = time.astype("datetime64[D]")
     minutes = (time - dates).astype("timedelta64[m]").astype(int)
-    bin_idx = minutes // resolution
+    bin_idx = minutes // time_resolution
 
     # Contiguous date range — missing dates become all-NaN columns
     all_dates = np.arange(
@@ -155,9 +163,12 @@ def plot_intraday_heatmap(
     x_edges = mdates.date2num(all_dates.astype("datetime64[ms]").astype(object))
     x_edges = np.append(x_edges, x_edges[-1] + 1)
 
+    # Should be in hours
+    y_edges = np.arange(n_bins + 1) * time_resolution / 60
+
     mesh = ax.pcolormesh(
         x_edges,
-        np.arange(n_bins + 1),
+        y_edges,
         matrix,
         cmap=cmap,
         norm=norm,
@@ -184,12 +195,11 @@ def plot_intraday_heatmap(
     # ------------------------------------------------------------------ #
     # Y-axis — time of day (HH), ticks every 3 hours, midnight at bottom #
     # ------------------------------------------------------------------ #
-    bins_per_hour = 3 * 60 // resolution
-    tick_bins = np.arange(0, n_bins, bins_per_hour)
-    ax.set_yticks(tick_bins + 0.5)
-    ax.set_yticklabels(
-        [f"{(b * resolution) // 60:02d}" for b in tick_bins],
-    )
-    ax.set_ylabel("Time of day")
+    tick_hours = np.arange(0, 25, 3)
+    ax.set_yticks(tick_hours)
+    # Set tick for end of day midnight but no label
+    ax.set_yticklabels([f"{t:02d}" for t in tick_hours[:-1]] + [None])
+    ax.set_ylabel("Time of day [h]")
+    ax.set_ylim(0, 24)
 
     return fig, ax
