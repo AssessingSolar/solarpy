@@ -48,6 +48,7 @@ def read_t16(filename, drop_dates=False, map_variables=False, encoding="utf-8"):
         "longitude deg E": np.nan,
         "altitude in m amsl": np.nan,
     }
+
     if isinstance(filename, str) and filename.startswith(("http://", "https://")):
         response = requests.get(filename)
         response.raise_for_status()
@@ -69,11 +70,12 @@ def read_t16(filename, drop_dates=False, map_variables=False, encoding="utf-8"):
                 names = line.split(",")
                 break
 
+            # Rename incorrectly named meta key in older files
+            line = line.replace("longitude deg N", "longitude deg E")
+
             for mk in meta.keys():
                 if mk in line:
                     meta[mk] = line.replace(mk, "").replace(",", "").strip()
-                    # Fix issue in older files
-                    meta[mk] = meta[mk].replace("longitude deg N", "longitude deg E")
 
         for k in [
             "latitude deg N",
