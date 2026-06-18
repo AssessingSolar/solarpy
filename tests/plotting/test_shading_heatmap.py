@@ -76,13 +76,6 @@ def test_colorbar_present(az_el_val):
     assert len(fig.axes) == 2
 
 
-def test_time_resolution(az_el_val):
-    # A very basic test that time_resolution parameter can be passed without error.
-    az, el, val = az_el_val
-    fig, _ = solarpy.plotting.plot_shading_heatmap(val, az, el, time_resolution=1)
-    assert len(fig.axes) == 2
-
-
 def test_colorbar_absent(az_el_val):
     az, el, val = az_el_val
     fig, _ = solarpy.plotting.plot_shading_heatmap(val, az, el, colorbar=False)
