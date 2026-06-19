@@ -204,21 +204,21 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         meta["latitude"],
         meta["longitude"],
     )
-    sun_rise_minutes = (
-        sun_rise_set["sunrise"].dt.hour * 60 + sun_rise_set["sunrise"].dt.minute
-    )
-    sun_set_minutes = (
-        sun_rise_set["sunset"].dt.hour * 60 + sun_rise_set["sunset"].dt.minute
-    )
+    sunrise = (
+        sun_rise_set["sunrise"] - sun_rise_set["sunrise"].index.normalize()
+    ).dt.total_seconds() / 3600
+    sunset = (
+        sun_rise_set["sunset"] - sun_rise_set["sunset"].index.normalize()
+    ).dt.total_seconds() / 3600
 
     # Intraday heat map plots
     cmap, norm = irradiance_colormap_and_norm(vmax=1000)
     for ax, c in zip(axes["heatmap"], components):
-        ax.plot(sun_rise_minutes, **limit_line_params)
-        ax.plot(sun_set_minutes, **limit_line_params)
         plot_intraday_heatmap(
             time=times, values=data[c], ax=ax, plot_colorbar=False, cmap=cmap, norm=norm
         )
+        ax.plot(sunrise, **limit_line_params)
+        ax.plot(sunset, **limit_line_params)
         ax.text(0.02, 0.95, c.upper(), va="top", ha="left", transform=ax.transAxes)
 
     ts_scatter_params = dict(
