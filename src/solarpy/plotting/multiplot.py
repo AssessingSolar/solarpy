@@ -546,7 +546,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
 
     # Statistics text
     min_date, max_date = min(times).date(), max(times).date()
-    dt_hours = np.median(np.diff(times.astype("int64"))) / 3.6e12
+    dt_hours = np.median(np.diff(times)).total_seconds() / 3600
     period_text = (
         f"Period: {min_date.strftime('%Y-%m-%d')} to "
         f"{max_date.strftime('%Y-%m-%d')}  (days: {days})"
