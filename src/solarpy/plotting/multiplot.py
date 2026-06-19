@@ -184,7 +184,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     Kd = data["dhi"] / ghi_extra
     K = data["dhi"] / data["ghi"]
 
-    utc_offset_longitude = round(meta["longitude"] / 15)
+    utc_offset_longitude = round(meta["longitude"] / 15)  # hours
     time_longitude_local = times.tz_convert(
         f"ETC/GMT{-utc_offset_longitude:+d}"
     ).tz_localize(None)
@@ -205,16 +205,16 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
 
     # Determine sunrise and sunset
     sun_rise_set = pvlib.solarposition.sun_rise_set_transit_spa(
-        pd.date_range(time_longitude_local.min(), periods=days, freq="1d"),
+        pd.date_range(times.min(), periods=days, freq="1d"),
         meta["latitude"],
         meta["longitude"],
     )
     sunrise = (
         sun_rise_set["sunrise"] - sun_rise_set["sunrise"].index.normalize()
-    ).dt.total_seconds() / 3600
+    ).dt.total_seconds() / 3600 - utc_offset_longitude
     sunset = (
         sun_rise_set["sunset"] - sun_rise_set["sunset"].index.normalize()
-    ).dt.total_seconds() / 3600
+    ).dt.total_seconds() / 3600 - utc_offset_longitude
 
     # Intraday heat map plots
     cmap, norm = irradiance_colormap_and_norm(vmax=1000)
