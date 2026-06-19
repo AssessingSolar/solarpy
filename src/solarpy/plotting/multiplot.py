@@ -184,11 +184,16 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     Kd = data["dhi"] / ghi_extra
     K = data["dhi"] / data["ghi"]
 
+    utc_offset_longitude = round(meta["longitude"] / 15)  # hours
+    time_longitude_local = times.tz_convert(
+        f"ETC/GMT{-utc_offset_longitude:+d}"
+    ).tz_localize(None)
+
     fig, axes = _multiplot_layout(figsize=figsize)
 
     ts_xlim = (times.date.min(), times.date.max() + dt.timedelta(days=1))
     days = len(set(times.date))
-    limit_line_params = {"lw": 1.5, "alpha": 0.8, "c": "r"}
+    limit_line_params = {"lw": 1.5, "alpha": 0.8, "c": "r", "linestyle": "--"}
 
     # Time series plots
     # TODO: remove pandas dependency
@@ -206,16 +211,21 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     )
     sunrise = (
         sun_rise_set["sunrise"] - sun_rise_set["sunrise"].index.normalize()
-    ).dt.total_seconds() / 3600
+    ).dt.total_seconds() / 3600 + utc_offset_longitude
     sunset = (
         sun_rise_set["sunset"] - sun_rise_set["sunset"].index.normalize()
-    ).dt.total_seconds() / 3600
+    ).dt.total_seconds() / 3600 + utc_offset_longitude
 
     # Intraday heat map plots
     cmap, norm = irradiance_colormap_and_norm(vmax=1000)
     for ax, c in zip(axes["heatmap"], components):
         plot_intraday_heatmap(
-            time=times, values=data[c], ax=ax, plot_colorbar=False, cmap=cmap, norm=norm
+            time=time_longitude_local,
+            values=data[c],
+            ax=ax,
+            plot_colorbar=False,
+            cmap=cmap,
+            norm=norm,
         )
         ax.plot(sunrise, **limit_line_params)
         ax.plot(sunset, **limit_line_params)
@@ -297,7 +307,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         )
 
     for ax in axes["ts_scatter"]:
-        ax.axhline(1, linestyle="--", **limit_line_params)
+        ax.axhline(1, **limit_line_params)
 
     fig.align_ylabels(axes["line"] + axes["heatmap"] + axes["ts_scatter"])
 
@@ -376,10 +386,14 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     axes["mid_l"][3].set_xlabel("GHI [W/m²]")
     axes["mid_l"][3].set_ylabel("DHI + DNI·cos(Z) - GHI [W/m²]")
     x_limits = np.array([50, 1400])
-    axes["mid_l"][3].plot(x_limits, +0.08 * x_limits, ls="--", **limit_line_params)
-    axes["mid_l"][3].plot(x_limits, -0.08 * x_limits, ls="--", **limit_line_params)
-    axes["mid_l"][3].plot(x_limits, +0.15 * x_limits, ls="-.", **limit_line_params)
-    axes["mid_l"][3].plot(x_limits, -0.15 * x_limits, ls="-.", **limit_line_params)
+    axes["mid_l"][3].plot(x_limits, +0.08 * x_limits, **limit_line_params)
+    axes["mid_l"][3].plot(x_limits, -0.08 * x_limits, **limit_line_params)
+    axes["mid_l"][3].plot(
+        x_limits, +0.15 * x_limits, **{**limit_line_params, "linestyle": "-."}
+    )
+    axes["mid_l"][3].plot(
+        x_limits, -0.15 * x_limits, **{**limit_line_params, "linestyle": "-."}
+    )
 
     # K vs. zenith
     ax = axes["mid_r"][0]
@@ -392,7 +406,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         norm=TwoSlopeNorm(vmin=1, vcenter=40, vmax=250),
         **scatter_params,
     )
-    ax.plot([0, 75, 75, 93], [1.05, 1.05, 1.10, 1.10], ls="--", **limit_line_params)
+    ax.plot([0, 75, 75, 93], [1.05, 1.05, 1.10, 1.10], **limit_line_params)
     ax.set_xlabel("Solar zenith [°]")
     ax.set_ylabel("K = DHI / GHI [-]")
     ax.text(
@@ -423,7 +437,6 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     ax.plot(
         [0, Kn_limit, 1.4, 1.4],
         [0, Kn_limit, Kn_limit, 0],
-        ls="--",
         **limit_line_params,
     )
     ax.set_xlabel("Kt = GHI / TOA / cos(Z) [-]")
@@ -450,9 +463,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         alpha=0.5,
     )
     # K <= 0.96 for Kt > 0.6 from (Geuder et al. 2015): 10.1016/j.egypro.2015.03.205
-    ax.plot(
-        [0, 0.6, 0.6, 1.4, 1.4], [1.1, 1.1, 0.96, 0.96, 0], ls="--", **limit_line_params
-    )
+    ax.plot([0, 0.6, 0.6, 1.4, 1.4], [1.1, 1.1, 0.96, 0.96, 0], **limit_line_params)
     ax.set_xlabel("Kt = GHI / TOA / cos(Z) [-]")
     ax.set_ylabel("K = DHI / GHI [-]")
 
@@ -467,12 +478,8 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         norm=TwoSlopeNorm(vmin=1, vcenter=40, vmax=250),
         **scatter_params,
     )
-    ax.plot(
-        [0, 75, 75, 93, 93], [1.08, 1.08, 1.15, 1.15, 1], ls="--", **limit_line_params
-    )
-    ax.plot(
-        [0, 75, 75, 93, 93], [0.92, 0.92, 0.85, 0.85, 1], ls="--", **limit_line_params
-    )
+    ax.plot([0, 75, 75, 93, 93], [1.08, 1.08, 1.15, 1.15, 1], **limit_line_params)
+    ax.plot([0, 75, 75, 93, 93], [0.92, 0.92, 0.85, 0.85, 1], **limit_line_params)
     ax.set_xlabel("Solar zenith [°]")
     ax.set_ylabel("GHI / (DHI + DNI·cos(Z)) [-]")
     ax.text(
@@ -672,6 +679,3 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
             ax.set_axis_off()
 
     return fig, axes
-
-
-# %%
