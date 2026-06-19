@@ -84,6 +84,8 @@ def read_t16(filename, drop_dates=False, map_variables=False, encoding="utf-8"):
         ]:
             # convert to float or int
             meta[k] = float(meta[k]) if "." in meta[k] else int(meta[k])
+            if meta[k] == -999:
+                meta[k] = np.nan
         if meta["stationcode"] == "":
             meta["stationcode"] = None
 
