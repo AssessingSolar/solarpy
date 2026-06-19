@@ -211,10 +211,10 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     )
     sunrise = (
         sun_rise_set["sunrise"] - sun_rise_set["sunrise"].index.normalize()
-    ).dt.total_seconds() / 3600 - utc_offset_longitude
+    ).dt.total_seconds() / 3600 + utc_offset_longitude
     sunset = (
         sun_rise_set["sunset"] - sun_rise_set["sunset"].index.normalize()
-    ).dt.total_seconds() / 3600 - utc_offset_longitude
+    ).dt.total_seconds() / 3600 + utc_offset_longitude
 
     # Intraday heat map plots
     cmap, norm = irradiance_colormap_and_norm(vmax=1000)
