@@ -184,6 +184,11 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     Kd = data["dhi"] / ghi_extra
     K = data["dhi"] / data["ghi"]
 
+    utc_offset_longitude = round(meta["longitude"] / 15)
+    time_longitude_local = times.tz_convert(
+        f"ETC/GMT{-utc_offset_longitude:+d}"
+    ).tz_localize(None)
+
     fig, axes = _multiplot_layout(figsize=figsize)
 
     ts_xlim = (times.date.min(), times.date.max() + dt.timedelta(days=1))
@@ -215,7 +220,12 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     cmap, norm = irradiance_colormap_and_norm(vmax=1000)
     for ax, c in zip(axes["heatmap"], components):
         plot_intraday_heatmap(
-            time=times, values=data[c], ax=ax, plot_colorbar=False, cmap=cmap, norm=norm
+            time=time_longitude_local,
+            values=data[c],
+            ax=ax,
+            plot_colorbar=False,
+            cmap=cmap,
+            norm=norm,
         )
         ax.plot(sunrise, **limit_line_params)
         ax.plot(sunset, **limit_line_params)
