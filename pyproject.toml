@@ -53,6 +53,7 @@ doc = [
     "sphinx-copybutton==0.5.2",
     "sphinx-design==0.7.0",
     "sphinx-gallery==0.21.0",
+    "sphinx-marimo==0.3.0",
     "memory_profiler==0.61.0",
     "pvlib==0.14.0",
     "pandas==2.3.3",
