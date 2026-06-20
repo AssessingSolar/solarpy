@@ -11,13 +11,14 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../src'))
+
+sys.path.insert(0, os.path.abspath("../../src"))
 
 # -- Project information -----------------------------------------------------
 
-project = 'solarpy'
-copyright = '2025 Adam R. Jensen'
-author = 'Adam R. Jensen'
+project = "solarpy"
+copyright = "2025 Adam R. Jensen"
+author = "Adam R. Jensen"
 
 
 # -- General configuration ---------------------------------------------------
@@ -26,23 +27,26 @@ author = 'Adam R. Jensen'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'myst_nb',  # markdown and jupyter-notebook parsing
-    'sphinx.ext.autodoc',  # generate documentation from docstrings
-    'sphinx.ext.autosummary',
-    'sphinx.ext.extlinks',  # short external link roles (e.g. :doi:)
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.napoleon',  # parsing of Numpy docstrings
-    'sphinx_copybutton',  # add copy button to code examples
-    'sphinx_design',  # grid layouts and cards
-    'sphinx_gallery.gen_gallery',  # build the example gallery
+    "myst_nb",  # markdown and jupyter-notebook parsing
+    "sphinx.ext.autodoc",  # generate documentation from docstrings
+    "sphinx.ext.autosummary",
+    "sphinx.ext.extlinks",  # short external link roles (e.g. :doi:)
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.napoleon",  # parsing of Numpy docstrings
+    "sphinx_copybutton",  # add copy button to code examples
+    "sphinx_design",  # grid layouts and cards
+    "sphinx_gallery.gen_gallery",  # build the example gallery
+    "sphinx_marimo",  # for including interactive marimo notebooks
 ]
+
+marimo_notebook_dir = "notebooks"  # Directory containing .py Marimo notebooks
 
 myst_enable_extensions = ["colon_fence"]  # for sphinx-design
 
 autodoc_typehints = "description"  # only show type hints in parameter description
 
 extlinks = {
-    'doi': ('https://doi.org/%s', 'doi:%s'),
+    "doi": ("https://doi.org/%s", "doi:%s"),
 }
 
 # Configure copybutton to strip >>> when copying code
@@ -50,21 +54,21 @@ copybutton_prompt_text = r">>> |\.\.\. "
 copybutton_prompt_is_regexp = True
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 # The generated gallery/*.ipynb files are excluded so that myst-nb
 # does not treat them as notebook sources alongside sphinx-gallery's *.rst.
-exclude_patterns = ['gallery/*.ipynb', 'gallery/**/*.ipynb']
+exclude_patterns = ["gallery/*.ipynb", "gallery/**/*.ipynb"]
 
 
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.
-html_theme = 'sphinx_book_theme'
-html_title = 'solarpy'
+html_theme = "sphinx_book_theme"
+html_title = "solarpy"
 # html_logo = "_static/solarpy_logo.svg"
 # html_favicon = "_static/solarpy_logo.svg"
 
@@ -80,19 +84,19 @@ html_theme_options = {
 # html_static_path = ['_static']
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = "sphinx"
 
 # If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
 html_show_copyright = False
 
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3/', None),
-    'numpy': ('https://numpy.org/doc/stable/', None),
-    'pandas': ('https://pandas.pydata.org/pandas-docs/stable', None),
-    'matplotlib': ('https://matplotlib.org/stable', None),
-    'shapely': ('https://shapely.readthedocs.io/en/stable/', None),
-    'pvlib': ('https://pvlib-python.readthedocs.io/en/stable/', None),
-    'solposx': ('https://solposx.readthedocs.io/en/stable/', None),
+    "python": ("https://docs.python.org/3/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "pandas": ("https://pandas.pydata.org/pandas-docs/stable", None),
+    "matplotlib": ("https://matplotlib.org/stable", None),
+    "shapely": ("https://shapely.readthedocs.io/en/stable/", None),
+    "pvlib": ("https://pvlib-python.readthedocs.io/en/stable/", None),
+    "solposx": ("https://solposx.readthedocs.io/en/stable/", None),
 }
 
 # Number of seconds for a cell to execute before timeout (default=30)
@@ -101,24 +105,23 @@ nb_execution_timeout = 120
 # -- sphinx-gallery configuration ---------------------------------------------
 
 sphinx_gallery_conf = {
-    'examples_dirs': '../examples',  # path to example scripts
-    'gallery_dirs': 'gallery',  # path to where to save gallery generated output
-    'filename_pattern': r'plot_',
-    'remove_config_comments': True,
+    "examples_dirs": "../examples",  # path to example scripts
+    "gallery_dirs": "gallery",  # path to where to save gallery generated output
+    "filename_pattern": r"plot_",
+    "remove_config_comments": True,
     # link functions/classes used in the examples back to their docs page
-    'doc_module': ('solarpy',),
-    'backreferences_dir': 'generated/gallery_backreferences',
-    'reference_url': {
-        'solarpy': None,
+    "doc_module": ("solarpy",),
+    "backreferences_dir": "generated/gallery_backreferences",
+    "reference_url": {
+        "solarpy": None,
     },
-    'show_memory': True,
+    "show_memory": True,
     # Disable download button
-    'download_all_examples': False,
+    "download_all_examples": False,
     # 'parallel': 2,  # did not work locally
-
-    'subsection_order': [
-        '../examples/plots',
-        '../examples/quality',
-        '../examples/errors',
+    "subsection_order": [
+        "../examples/plots",
+        "../examples/quality",
+        "../examples/errors",
     ],
 }
