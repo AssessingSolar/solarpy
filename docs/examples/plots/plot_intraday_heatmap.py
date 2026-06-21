@@ -121,7 +121,7 @@ fig.tight_layout()
 # this paramter by setting the ``time_resolution`` parameter.
 # The example below plots hourly data.
 
-data_1h = data.resample("1H").mean()
+data_1h = data.resample("1h").mean()
 
 fig, ax = solarpy.plotting.plot_intraday_heatmap(
     time=data_1h.index,
