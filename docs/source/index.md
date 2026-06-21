@@ -36,5 +36,6 @@ View the source code, report issues, and contribute to the project on GitHub.
 user_guide/index
 api/index
 gallery/index
+tutorial
 whatsnew
 ```
