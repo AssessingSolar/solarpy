@@ -39,7 +39,8 @@ extensions = [
     "sphinx_marimo",  # for including interactive marimo notebooks
 ]
 
-marimo_notebook_dir = "notebooks"  # Directory containing .py Marimo notebooks
+# Directory containing Marimo notebooks, relative to conf.py file
+marimo_notebook_dir = "../notebooks"
 
 myst_enable_extensions = ["colon_fence"]  # for sphinx-design
 
