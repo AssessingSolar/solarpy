@@ -2,7 +2,7 @@
 Multiplot
 =========
 
-.. marimo:: notebooks/example.py
+.. marimo:: example.py
    :height: 800px
    :width: 100%
    :theme: light
