@@ -67,6 +67,9 @@ Issues = "https://github.com/assessingsolar/solarpy/issues"
 Repository = "https://github.com/assessingsolar/solarpy.git"
 Changelog = "https://github.com/assessingsolar/solarpy/blob/main/docs/source/whatsnew.md"
 
+[tool.ruff.lint.per-file-ignores]
+"notebooks/*.py" = ["F811"]
+
 [tool.pytest.ini_options]
 addopts = "--cov=solarpy --cov-fail-under=1 --cov-report=term-missing --doctest-modules"
 pythonpath = ["src"]
