@@ -70,7 +70,7 @@ import pvlib
 data.loc["2023-02-01":"2023-02-15", "ghi"] = float("nan")
 data.loc["2023-10-01":"2023-10-05", "ghi"] = -150
 
-# Create custom colormap and norm
+# Load custom colormap and norm
 cmap, norm = solarpy.plotting.irradiance_colormap_and_norm(vmax=1000)
 
 fig, ax = plt.subplots(figsize=(6, 3))
