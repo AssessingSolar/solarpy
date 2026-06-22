@@ -8,11 +8,11 @@ irradiance measurements.
 """
 
 # %%
-# In the example below, GHI is plotted against DHI + DNI·cos(Z) using
-# :py:func:`solarpy.plotting.plot_bsrn_closure`. The BSRN closure threshold
-# # limits of for low zenith (±8%, dashed) and high zenith (±15%, dash-dot)
-# are overlaid. Measurements falling outside these bands indicate a possible
-# inconsistency in at least one of the components.
+# In the example below, measured GHI is plotted against calculated GHI using
+# :py:func:`solarpy.plotting.plot_bsrn_closure`. Reference closure limits of
+# ±8% (dashed) and ±15% (dash-dot) are overlaid. Measurements falling
+# outside these bands indicate a possible inconsistency in at least one of
+# the components.
 
 # %%
 # Load example data
@@ -44,9 +44,10 @@ data = data[is_daytime]
 # Plot the closure test (absolute difference)
 # --------------------------------------------
 #
-# By default, the y-axis shows the absolute difference between the GHI
-# components, DHI + DNI·cos(Z) - GHI, in W/m². The closure limits are sloped
-# lines, since they are defined as a percentage of GHI.
+# By default, GHI is plotted on the x-axis and the y-axis shows the
+# absolute difference between the GHI components, DHI + DNI·cos(Z) - GHI,
+# in W/m². The closure limits are sloped lines, since they are defined as
+# a percentage of GHI.
 
 fig, ax = solarpy.plotting.plot_bsrn_closure(
     ghi=data["ghi"],
@@ -61,10 +62,12 @@ fig.tight_layout()
 # Plot the closure test (relative difference)
 # --------------------------------------------
 #
-# Setting ``relative=True`` shows the relative difference instead, i.e.,
-# (DHI + DNI·cos(Z) - GHI) / GHI. The closure limits are now horizontal
-# lines, since they represent the same fixed percentage thresholds (±8%
-# and ±15%) regardless of the GHI level.
+# Setting ``relative=True`` plots the solar zenith angle on the x-axis and
+# the ratio GHI / (DHI + DNI·cos(Z)) on the y-axis, since the closure
+# residual is more sensitive to the sun's position than to the irradiance
+# magnitude itself. The closure limits widen from ±8% to ±15% above a
+# zenith angle of 75°, reflecting the larger measurement uncertainty at low
+# sun elevations.
 
 fig, ax = solarpy.plotting.plot_bsrn_closure(
     ghi=data["ghi"],
@@ -73,5 +76,23 @@ fig, ax = solarpy.plotting.plot_bsrn_closure(
     solar_zenith=data["solar_zenith"],
     relative=True,
 )
+
+fig.tight_layout()
+
+# %%
+# Plot both versions side by side
+# --------------------------------
+
+fig, axes = plt.subplots(ncols=2, figsize=(10, 5))
+
+for ax, relative in zip(axes, [False, True]):
+    solarpy.plotting.plot_bsrn_closure(
+        ghi=data["ghi"],
+        dhi=data["dhi"],
+        dni=data["dni"],
+        solar_zenith=data["solar_zenith"],
+        relative=relative,
+        ax=ax,
+    )
 
 fig.tight_layout()
