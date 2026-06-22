@@ -5,6 +5,7 @@
 .vscode
 */.ipynb_checkpoints/*
 __pycache__/
+**/__marimo__/*
 
 # Distribution / packaging
 build/
