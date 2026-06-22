@@ -2,7 +2,7 @@
 BSRN closure test
 ==================
 
-The BSRN closure test compares measured GHI against the GHI computed from its
+The BSRN closure test compares measured GHI against GHI computed from its
 components, DHI + DNI·cos(Z), to check the consistency of the three
 irradiance measurements.
 """
@@ -63,11 +63,9 @@ fig.tight_layout()
 # --------------------------------------------
 #
 # Setting ``relative=True`` plots the solar zenith angle on the x-axis and
-# the ratio GHI / (DHI + DNI·cos(Z)) on the y-axis, since the closure
-# residual is more sensitive to the sun's position than to the irradiance
-# magnitude itself. The closure limits widen from ±8% to ±15% above a
-# zenith angle of 75°, reflecting the larger measurement uncertainty at low
-# sun elevations.
+# the ratio GHI / (DHI + DNI·cos(Z)) on the y-axis. The closure limits widen
+# from ±8% to ±15% above a zenith angle of 75°, reflecting the larger
+# measurement uncertainty at low sun elevations.
 
 fig, ax = solarpy.plotting.plot_bsrn_closure(
     ghi=data["ghi"],
@@ -76,23 +74,5 @@ fig, ax = solarpy.plotting.plot_bsrn_closure(
     solar_zenith=data["solar_zenith"],
     relative=True,
 )
-
-fig.tight_layout()
-
-# %%
-# Plot both versions side by side
-# --------------------------------
-
-fig, axes = plt.subplots(ncols=2, figsize=(10, 5))
-
-for ax, relative in zip(axes, [False, True]):
-    solarpy.plotting.plot_bsrn_closure(
-        ghi=data["ghi"],
-        dhi=data["dhi"],
-        dni=data["dni"],
-        solar_zenith=data["solar_zenith"],
-        relative=relative,
-        ax=ax,
-    )
 
 fig.tight_layout()
