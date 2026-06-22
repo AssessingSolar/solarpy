@@ -6,6 +6,11 @@
 ::::{grid} 1 2 2 2
 :gutter: 4
 
+:::{grid-item-card}  Tutorial
+:link: tutorial
+:link-type: doc
+Intro tutorial to visual quality assessment of irradiance measurements.
+:::
 :::{grid-item-card}  Quality check functions
 :link: api/quality
 :link-type: doc
@@ -16,7 +21,7 @@ Apply automatic quality checks to solar irradiance measurements.
 :link-type: doc
 Visualize irradiance data using heatmaps, scatter plots, multiplots, and more.
 :::
-:::{grid-item-card}  Guide to quality assessment
+:::{grid-item-card}  Visual quality control
 :link: gallery/index
 :link-type: doc
 Explore examples of how to visually inspect irradiance data for quality issues.
