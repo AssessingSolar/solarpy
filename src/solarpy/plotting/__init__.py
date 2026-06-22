@@ -7,3 +7,4 @@ from solarpy.plotting.plot_scatter import plot_scatter_heatmap  # noqa: F401
 from solarpy.plotting.time_drift_correlation import plot_time_drift_correlation  # noqa: F401
 from solarpy.plotting.multiplot import multiplot  # noqa: F401
 from solarpy.plotting.bsrn_limits import plot_bsrn_limits  # noqa: F401
+from solarpy.plotting.bsrn_comparison import plot_bsrn_closure  # noqa: F401
