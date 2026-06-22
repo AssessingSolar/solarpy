@@ -30,8 +30,8 @@ def plot_bsrn_closure(
     """Plot a scatter heatmap of the BSRN closure test.
 
     Compares measured GHI against the GHI computed from its components,
-    *ghi_calc* = DHI + DNI·cos(Z), using
-    :func:`solarpy.plotting.plot_scatter_heatmap`. Reference closure limits
+    *GHI_calc* = DHI + DNI·cos(Z), using
+    :func:`solarpy.plotting.plot_scatter_heatmap`. Closure limits
     of ±8% (dashed) and ±15% (dash-dot) are overlaid.
 
     Parameters
@@ -137,12 +137,8 @@ def plot_bsrn_closure(
 
     limit_line_params = {"lw": 1.5, "alpha": 0.8, "c": "r", "linestyle": "--"}
     if relative:
-        ax.plot(
-            [0, 75, 75, 93, 93], [1.08, 1.08, 1.15, 1.15, 1], **limit_line_params
-        )
-        ax.plot(
-            [0, 75, 75, 93, 93], [0.92, 0.92, 0.85, 0.85, 1], **limit_line_params
-        )
+        ax.plot([0, 75, 75, 93, 93], [1.08, 1.08, 1.15, 1.15, 1], **limit_line_params)
+        ax.plot([0, 75, 75, 93, 93], [0.92, 0.92, 0.85, 0.85, 1], **limit_line_params)
     else:
         x_limits = np.array([max(xlim[0], 50), xlim[1]])
         for frac, linestyle in zip([0.08, 0.15], ["--", "-."]):

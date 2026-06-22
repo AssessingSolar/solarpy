@@ -8,11 +8,17 @@ irradiance measurements.
 """
 
 # %%
-# In the example below, measured GHI is plotted against calculated GHI using
-# :py:func:`solarpy.plotting.plot_bsrn_closure`. Reference closure limits of
-# ±8% (dashed) and ±15% (dash-dot) are overlaid. Measurements falling
-# outside these bands indicate a possible inconsistency in at least one of
-# the components.
+# This closure comparison test is one of the most powerful quality checks for
+# solar radiation measurements, as it compared the same quantity, GHI, measured
+# independently using different instruments.
+
+# In the example below, the difference between measured and calculated GHI is
+# plotted against calculated GHI using :py:func:`solarpy.plotting.plot_bsrn_closure`.
+# Reference closure limits of ±8% (dashed) and ±15% (dash-dot) are overlaid.
+# Measurements falling outside these bands indicate a possible inconsistency in at
+# least one of the components. It should be noted that the closure test is not a
+# definitive test, as it does not indicate which of the three measurements is potentially
+# erroneous.
 
 # %%
 # Load example data
@@ -21,7 +27,6 @@ irradiance measurements.
 # The example data is from DTU's station in Lyngby, Denmark north of Copenhagen.
 # The data is from 2023 and includes measurements of GHI, DHI, and DNI at a 1-minute resolution.
 
-import matplotlib.pyplot as plt
 import pvlib
 import solarpy
 
