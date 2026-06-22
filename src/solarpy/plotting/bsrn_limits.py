@@ -83,6 +83,7 @@ def plot_bsrn_limits(
     --------
     solarpy.quality.bsrn_limits
     solarpy.quality.bsrn_limits_flag
+    solarpy.plotting.plot_bsrn_closure
     """
     if ax is None:
         fig, ax = plt.subplots()
