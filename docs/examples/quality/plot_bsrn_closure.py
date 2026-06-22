@@ -27,7 +27,6 @@ irradiance measurements.
 # The example data is from DTU's station in Lyngby, Denmark north of Copenhagen.
 # The data is from 2023 and includes measurements of GHI, DHI, and DNI at a 1-minute resolution.
 
-import matplotlib.pyplot as plt
 import pvlib
 import solarpy
 
