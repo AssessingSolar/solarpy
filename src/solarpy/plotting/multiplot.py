@@ -273,7 +273,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     )
     axes["ts_scatter"][1].set_ylabel("GHI / (DHI + DNI·cos(Z)) [-]")
 
-    # Clearsky index time series scatter plot (clearsky conditions)
+    # Clearsky index time series scatter plot
     if "ghi_clear" in data.columns:
         plot_scatter_heatmap(
             x=mdates.date2num(times),
@@ -288,7 +288,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         axes["ts_scatter"][2].text(
             0.02,
             0.98,
-            "Clearsky index based on McClear",
+            "Clearsky index based on the McClear model.",
             ha="left",
             va="top",
             alpha=0.75,
