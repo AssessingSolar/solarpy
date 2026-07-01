@@ -22,8 +22,7 @@ def bsrn_limits(solar_zenith, dni_extra, limits):
         upper = scale * DNI_extra * cos(solar_zenith) ^ exponent + offset
 
     where *scale*, *exponent*, and *offset* are coefficients that depend on
-    the variable and test level. A value is flagged if it lies outside
-    [lower, upper].
+    the variable and test level.
 
     Parameters
     ----------
