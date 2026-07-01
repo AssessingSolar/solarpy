@@ -97,22 +97,22 @@ def t16_quality_flags(data, altitude=0, horizon=None):
                 nan_flag=False,
             )
     # BSRN CLOSURE CHECK
-    for check in ["low", "high"]:
-        flags[f"flag3{check}SZA"] = solarpy.quality.closure_flag(
+    for zenith_domain in ["low", "high"]:
+        flags[f"flag3{zenith_domain}SZA"] = solarpy.quality.closure_flag(
             ghi=data["ghi"],
             dni=data["dni"],
             dhi=data["dhi"],
             solar_zenith=data["solar_zenith"],
-            check=f"{check}-zenith",
+            zenith_domain=zenith_domain,
             outside_domain_flag=False,
             nan_flag=False,
         )
 
-        flags[f"flagK{check}SZA"] = solarpy.quality.diffuse_fraction_flag(
+        flags[f"flagK{zenith_domain}SZA"] = solarpy.quality.diffuse_fraction_flag(
             ghi=data["ghi"],
             dhi=data["dhi"],
             solar_zenith=data["solar_zenith"],
-            check=f"{check}-zenith",
+            zenith_domain=zenith_domain,
             outside_domain_flag=False,
             nan_flag=False,
         )

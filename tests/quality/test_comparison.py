@@ -70,19 +70,19 @@ def test_ghi_zero_no_warning():
 
 def test_check_low_zenith_ignores_high_zenith_violation():
     dhi = GHI * 1.11  # K > 1.10, violation in high-zenith
-    flag = diffuse_fraction_flag(GHI, dhi, SZA_HIGH, check="low-zenith")
+    flag = diffuse_fraction_flag(GHI, dhi, SZA_HIGH, zenith_domain="low")
     assert flag == False  # noqa: E712
 
 
 def test_check_high_zenith_ignores_low_zenith_violation():
     dhi = GHI * 1.06  # K >= 1.05, violation in low-zenith
-    flag = diffuse_fraction_flag(GHI, dhi, SZA_LOW, check="high-zenith")
+    flag = diffuse_fraction_flag(GHI, dhi, SZA_LOW, zenith_domain="high")
     assert flag == False  # noqa: E712
 
 
 def test_check_invalid_raises():
-    with pytest.raises(ValueError, match="check must be"):
-        diffuse_fraction_flag(GHI, GHI, SZA_LOW, check="invalid")
+    with pytest.raises(ValueError, match="zenith_domain must be"):
+        diffuse_fraction_flag(GHI, GHI, SZA_LOW, zenith_domain="invalid")
 
 
 # --- outside_domain_flag ---
@@ -226,19 +226,19 @@ def test_closure_sum_sw_zero_no_warning():
 
 def test_closure_check_low_zenith_ignores_high_zenith_violation():
     ghi = SUM_SW_HIGH * 1.16  # violation in high-zenith domain
-    flag = closure_flag(ghi, DNI, DHI, SZA_HIGH, check="low-zenith")
+    flag = closure_flag(ghi, DNI, DHI, SZA_HIGH, zenith_domain="low")
     assert flag == False  # noqa: E712
 
 
 def test_closure_check_high_zenith_ignores_low_zenith_violation():
     ghi = SUM_SW_LOW * 1.09  # violation in low-zenith domain
-    flag = closure_flag(ghi, DNI, DHI, SZA_LOW, check="high-zenith")
+    flag = closure_flag(ghi, DNI, DHI, SZA_LOW, zenith_domain="high")
     assert flag == False  # noqa: E712
 
 
 def test_closure_check_invalid_raises():
-    with pytest.raises(ValueError, match="check must be"):
-        closure_flag(GHI, DNI, DHI, SZA_LOW, check="invalid")
+    with pytest.raises(ValueError, match="zenith_domain must be"):
+        closure_flag(GHI, DNI, DHI, SZA_LOW, zenith_domain="invalid")
 
 
 # --- outside_domain_flag ---
