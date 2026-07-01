@@ -39,7 +39,8 @@ def t16_quality_flags(data, altitude=0, horizon=None):
     -------
     flags : pandas.DataFrame
         Boolean flags with the same index as *data*. ``True`` indicates the
-        observation failed the corresponding test. The columns are:
+        observation failed the corresponding test, ``False`` indicates it
+        passed or was outside the test domain. The columns are:
 
         - ``"flagPPLGHI"``, ``"flagPPLDIF"``, ``"flagPPLDNI"`` :
           BSRN physically possible limit (PPL) test
