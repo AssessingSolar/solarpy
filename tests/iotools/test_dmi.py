@@ -1,4 +1,4 @@
-"""Integration test for get_dmi_climate_station_data against the live DMI API."""
+"""Integration test for get_dmi_climate_data_station against the live DMI API."""
 
 from __future__ import annotations
 
@@ -66,13 +66,13 @@ def EXPECTED_METOBS_GHI():
     return ghi
 
 # ---------------------------------------------------------------------------
-# get_dmi_climate_station_data tests
+# get_dmi_climate_data_station tests
 # ---------------------------------------------------------------------------
 
 
 @pytest.fixture(scope="module")
 def result():
-    data, meta = solarpy.iotools.get_dmi_climate_station_data(
+    data, meta = solarpy.iotools.get_dmi_climate_data_station(
         station="06188",
         start=pd.Timestamp("2023-06-01"),
         end=pd.Timestamp("2023-06-02"),
@@ -87,7 +87,7 @@ def test_pagination(monkeypatch, EXPECTED_GHI):
     # use monkeypatch to set LIMIT=10, forcing the 25 records to be fetched
     # across 3 pages
     monkeypatch.setattr(solarpy.iotools.dmi, "LIMIT", 10)
-    data, _ = solarpy.iotools.get_dmi_climate_station_data(
+    data, _ = solarpy.iotools.get_dmi_climate_data_station(
         station="06188",
         start=pd.Timestamp("2023-06-01"),
         end=pd.Timestamp("2023-06-02"),
@@ -127,7 +127,7 @@ def test_identical_requests(data, data2):
 
 def test_dmi_nonexisting_station():
     with pytest.raises(ValueError, match="not_a_station"):
-        solarpy.iotools.get_dmi_climate_station_data(
+        solarpy.iotools.get_dmi_climate_data_station(
             station="not_a_station",
             start=pd.Timestamp("2023-06-01"),
             end=pd.Timestamp("2023-06-02"),
@@ -139,7 +139,7 @@ def test_dmi_nonexisting_station():
 
 def test_dmi_incorrect_time_resolution():
     with pytest.raises(requests.HTTPError, match="Invalid time resolution"):
-        solarpy.iotools.get_dmi_climate_station_data(
+        solarpy.iotools.get_dmi_climate_data_station(
             station="06188",
             start=pd.Timestamp("2023-06-01"),
             end=pd.Timestamp("2023-06-02"),

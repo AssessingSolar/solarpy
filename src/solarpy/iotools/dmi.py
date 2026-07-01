@@ -196,7 +196,7 @@ def _fetch_dmi_data(
     return records
 
 
-def get_dmi_climate_station_data(
+def get_dmi_climate_data_station(
     station: str,
     start,
     end,
@@ -266,7 +266,7 @@ def get_dmi_climate_station_data(
     the Sjælsmark station north of Copenhagen:
 
     >>> import solarpy
-    >>> data, meta = solarpy.iotools.get_dmi_climate_station_data(
+    >>> data, meta = solarpy.iotools.get_dmi_climate_data_station(
     ...     station='06188',  # Sjælsmark station id
     ...     start='2023-06-01',
     ...     end='2023-06-30',
@@ -330,7 +330,7 @@ def get_dmi_metobs(
     The Danish Meteorological Institute (DMI) operates automatic
     weather stations in Denmark and Greenland.
 
-    Unlike :func:`get_dmi_climate_station_data`, the data returned here is
+    Unlike :func:`get_dmi_climate_data_station`, the data returned here is
     neither quality-controlled nor aggregated. Observations are typically
     available at 10-minute or hourly resolution depending on the parameter.
     Data is available from 1953 onwards, though not all parameters are
