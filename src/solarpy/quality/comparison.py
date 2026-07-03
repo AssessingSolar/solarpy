@@ -10,6 +10,7 @@ def diffuse_fraction_flag(
     *,
     zenith_domain="both",
     outside_domain_flag=False,
+    ghi_threshold_on="measured",
     nan_flag=False,
 ):
     """Flag measurements where the diffuse fraction exceeds physically plausible limits.
@@ -38,6 +39,9 @@ def diffuse_fraction_flag(
         valid test boundary. Can be either ``True`` or ``False``.
         Default is ``False``, which does not flag untested values as
         suspicious.
+    ghi_threshold_on : {'measured', 'both'}, optional
+        Which parameter to apply the GHI threshold to, either measured GHI
+        or both measured GHI and DHI. Default is ``'measured'``.
     nan_flag : bool, optional
         If ``True``, flag values where *ghi* or *dhi* is NaN. Default
         is ``False``, which does not flag NaN values as suspicious.
@@ -66,7 +70,14 @@ def diffuse_fraction_flag(
     with np.errstate(divide="ignore", invalid="ignore"):
         K = dhi / ghi
     # TODO: Consideer adding option to also test for (dhi > 50) | (ghi > 50)
-    is_ghi_50 = ghi > 50
+    if ghi_threshold_on == "measured":
+        is_ghi_50 = ghi > 50
+    elif ghi_threshold_on == "both":
+        is_ghi_50 = (ghi > 50) | (dhi > 50)
+    else:
+        raise ValueError(
+            f"ghi_threshold_on must be 'measured' or 'both', got '{ghi_threshold_on}'."
+        )
 
     is_low_zenith = solar_zenith < 75
     is_high_zenith = (solar_zenith >= 75) & (solar_zenith < 93)
@@ -104,6 +115,7 @@ def closure_flag(
     *,
     zenith_domain="both",
     outside_domain_flag=False,
+    ghi_threshold_on="calculated",
     nan_flag=False,
 ):
     """Flag measurements where the three-component closure ratio exceeds plausible limits.
@@ -136,6 +148,9 @@ def closure_flag(
         valid test boundary. Can be either ``True`` or ``False``.
         Default is ``False``, which does not flag untested values as
         suspicious.
+    ghi_threshold_on : {'measured', 'calculated', 'both'}, optional
+        Which parameter to apply the GHI threshold to, either measured GHI,
+        calculated GHI, or both. Default is ``'calculated'``.
     nan_flag : bool, optional
         If ``True``, flag values where *ghi*, *dhi*, or *dni* is NaN.
         Default is ``False``, which does not flag NaN values as suspicious.
@@ -166,22 +181,32 @@ def closure_flag(
     with np.errstate(divide="ignore", invalid="ignore"):
         R = ghi / sum_sw
 
-    is_sum_50 = sum_sw > 50
+    if ghi_threshold_on == "measured":
+        is_ghi_50 = ghi > 50
+    elif ghi_threshold_on == "calculated":
+        is_ghi_50 = sum_sw > 50
+    elif ghi_threshold_on == "both":
+        is_ghi_50 = (ghi > 50) | (sum_sw > 50)
+    else:
+        raise ValueError(
+            f"ghi_threshold_on must be 'measured', 'calculated', or 'both', got '{ghi_threshold_on}'."
+        )
+
     is_low_zenith = solar_zenith < 75
     is_high_zenith = (solar_zenith >= 75) & (solar_zenith < 93)
 
     if zenith_domain == "high":
-        flag = is_sum_50 & is_high_zenith & (np.abs(R - 1.0) >= 0.15)
-        outside_domain = np.logical_not(is_sum_50 & is_high_zenith)
+        flag = is_ghi_50 & is_high_zenith & (np.abs(R - 1.0) >= 0.15)
+        outside_domain = np.logical_not(is_ghi_50 & is_high_zenith)
     elif zenith_domain == "low":
-        flag = is_sum_50 & is_low_zenith & (np.abs(R - 1.0) >= 0.08)
-        outside_domain = np.logical_not(is_sum_50 & is_low_zenith)
+        flag = is_ghi_50 & is_low_zenith & (np.abs(R - 1.0) >= 0.08)
+        outside_domain = np.logical_not(is_ghi_50 & is_low_zenith)
     elif zenith_domain == "both":
-        flag = is_sum_50 & (
+        flag = is_ghi_50 & (
             (is_low_zenith & (np.abs(R - 1.0) >= 0.08))
             | (is_high_zenith & (np.abs(R - 1.0) >= 0.15))
         )
-        outside_domain = np.logical_not(is_sum_50 & (is_low_zenith | is_high_zenith))
+        outside_domain = np.logical_not(is_ghi_50 & (is_low_zenith | is_high_zenith))
     else:
         raise ValueError(
             f"zenith_domain must be 'both', 'low', or 'high', got '{zenith_domain}'."
