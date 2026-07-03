@@ -50,14 +50,12 @@ def get_horizon_mines(
 
     Examples
     --------
-    Retrieve the horizon profile for Paris, France:
+    An example on how to retrieve horizon profile for Paris, France:
 
     >>> import solarpy
     >>> horizon, meta = solarpy.horizon.get_horizon_mines(
-    ...     latitude=48.8566, longitude=2.3522, timeout=10)
+    ...     latitude=48.8566, longitude=2.3522)
 
-    Example
-    -------
     .. marimo:: horizon.py
        :height: 700px
        :width: 100%
