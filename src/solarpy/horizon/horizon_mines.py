@@ -58,9 +58,11 @@ def get_horizon_mines(
 
     Example
     -------
-    .. marimo:: example.py
+    .. marimo:: horizon.py
        :height: 700px
        :width: 100%
+       :click-to-load: compact
+       :load-button-text: Click run interactive demo
     """
     if altitude is None:  # API will then infer altitude
         altitude = -999
