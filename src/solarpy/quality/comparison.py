@@ -32,7 +32,7 @@ def diffuse_fraction_flag(
     solar_zenith : array-like of float
         Solar zenith angle [degrees].
     zenith_domain : {'both', 'low', 'high'}, optional
-        Which solar zenith angle domain to zenith_domain. Default is ``'both'``.
+        Which solar zenith angle domain to check. Default is ``'both'``.
     outside_domain_flag : bool, optional
         Value to assign to the flag when conditions are outside the
         valid test boundary. Can be either ``True`` or ``False``.
