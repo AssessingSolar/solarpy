@@ -65,7 +65,7 @@ def test_ghi_zero_no_warning():
     assert flag == False  # noqa: E712
 
 
-# --- check parameter ---
+# --- zenith_domain parameter ---
 
 
 def test_check_low_zenith_ignores_high_zenith_violation():
@@ -86,6 +86,9 @@ def test_check_invalid_raises():
 
 
 # --- outside_domain_flag ---
+def test_low_zenith_within_limit_not_flagged():
+    dhi = GHI * 1.04  # K = 1.04 < 1.05
+    assert diffuse_fraction_flag(GHI, dhi, SZA_LOW) == False  # noqa: E712
 
 
 def test_outside_domain_flag_true_flags_nighttime():
@@ -101,6 +104,16 @@ def test_outside_domain_flag_true_flags_low_ghi():
 def test_outside_domain_flag_false_does_not_flag_nighttime():
     flag = diffuse_fraction_flag(GHI, GHI, SZA_NIGHT, outside_domain_flag=False)
     assert flag == False  # noqa: E712
+
+
+# --- ghi_threshold_on ---
+def test_diffuse_fraction_ghi_threshold_on():
+    assert (
+        diffuse_fraction_flag(40, 100, SZA_LOW, ghi_threshold_on="measured") == False
+    )  # noqa: E712
+    assert (
+        diffuse_fraction_flag(40, 100, SZA_LOW, ghi_threshold_on="both") == True
+    )  # noqa: E712
 
 
 # --- nan_flag ---
@@ -221,7 +234,7 @@ def test_closure_sum_sw_zero_no_warning():
     assert flag == False  # noqa: E712
 
 
-# --- check parameter ---
+# --- check zenith_domain ---
 
 
 def test_closure_check_low_zenith_ignores_high_zenith_violation():
@@ -257,6 +270,25 @@ def test_closure_outside_domain_flag_true_flags_low_sum_sw():
 def test_closure_outside_domain_flag_false_does_not_flag_nighttime():
     flag = closure_flag(GHI, DNI, DHI, SZA_NIGHT, outside_domain_flag=False)
     assert flag == False  # noqa: E712
+
+
+# --- ghi_threshold_on ---
+def test_closure_flag_ghi_threshold_on():
+    assert (
+        closure_flag(40, 500, 400, SZA_LOW, ghi_threshold_on="calculated") == True
+    )  # noqa: E712
+    assert (
+        closure_flag(40, 500, 400, SZA_LOW, ghi_threshold_on="measured") == False
+    )  # noqa: E712
+    assert (
+        closure_flag(40, 500, 400, SZA_LOW, ghi_threshold_on="both") == True
+    )  # noqa: E712
+    assert (
+        closure_flag(1000, 10, 10, SZA_LOW, ghi_threshold_on="calculated") == False
+    )  # noqa: E712
+    assert (
+        closure_flag(1000, 10, 10, SZA_LOW, ghi_threshold_on="both") == True
+    )  # noqa: E712
 
 
 # --- nan_flag ---
