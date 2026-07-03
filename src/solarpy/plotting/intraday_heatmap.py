@@ -155,7 +155,10 @@ def plot_intraday_heatmap(
     np.add.at(total, (bin_idx, date_idx), values)
     np.add.at(count, (bin_idx, date_idx), 1)
 
-    matrix = np.where(count > 0, total / count, np.nan)
+    # Use np.divide to avoid RuntimeWarning: invalid value encountered in divide
+    # matrix = np.where(count > 0, total / count, np.nan)
+    matrix = np.full(total.shape, np.nan, dtype=float)
+    np.divide(total, count, out=matrix, where=count > 0)
 
     # ------------------------------------------------------------------ #
     # pcolormesh expects cell edges: (n+1,) arrays                       #
