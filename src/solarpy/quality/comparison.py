@@ -4,7 +4,13 @@ import numpy as np
 
 
 def diffuse_fraction_flag(
-    ghi, dhi, solar_zenith, *, check="both", outside_domain_flag=False, nan_flag=False
+    ghi,
+    dhi,
+    solar_zenith,
+    *,
+    zenith_domain="both",
+    outside_domain_flag=False,
+    nan_flag=False,
 ):
     """Flag measurements where the diffuse fraction exceeds physically plausible limits.
 
@@ -25,7 +31,7 @@ def diffuse_fraction_flag(
         Diffuse horizontal irradiance [W/m²].
     solar_zenith : array-like of float
         Solar zenith angle [degrees].
-    check : {'high-zenith', 'low-zenith', 'both'}, optional
+    zenith_domain : {'both', 'low', 'high'}, optional
         Which solar zenith angle domain to check. Default is ``'both'``.
     outside_domain_flag : bool, optional
         Value to assign to the flag when conditions are outside the
@@ -65,20 +71,20 @@ def diffuse_fraction_flag(
     is_low_zenith = solar_zenith < 75
     is_high_zenith = (solar_zenith >= 75) & (solar_zenith < 93)
 
-    if check == "high-zenith":
+    if zenith_domain == "high":
         flag = is_ghi_50 & is_high_zenith & (K >= 1.10)
         outside_domain = np.logical_not(is_ghi_50 & is_high_zenith)
-    elif check == "low-zenith":
+    elif zenith_domain == "low":
         flag = is_ghi_50 & is_low_zenith & (K >= 1.05)
         outside_domain = np.logical_not(is_ghi_50 & is_low_zenith)
-    elif check == "both":
+    elif zenith_domain == "both":
         flag = is_ghi_50 & (is_low_zenith & (K >= 1.05)) | (
             is_high_zenith & (K >= 1.10)
         )
         outside_domain = np.logical_not(is_ghi_50 & (is_low_zenith | is_high_zenith))
     else:
         raise ValueError(
-            f"check must be 'both', 'low-zenith', or 'high-zenith', got '{check}'."
+            f"zenith_domain must be 'both', 'low', or 'high', got '{zenith_domain}'."
         )
 
     if outside_domain_flag:
@@ -96,7 +102,7 @@ def closure_flag(
     dhi,
     solar_zenith,
     *,
-    check="both",
+    zenith_domain="both",
     outside_domain_flag=False,
     nan_flag=False,
 ):
@@ -123,8 +129,8 @@ def closure_flag(
         Diffuse horizontal irradiance [W/m²].
     solar_zenith : array-like of float
         Solar zenith angle [degrees].
-    check : {'high-zenith', 'low-zenith', 'both'}, optional
-        Which solar zenith angle domain to check. Default is ``'both'``.
+    zenith_domain : {'both', 'low', high'}, optional
+        Which solar zenith angle domain to zenith_domain. Default is ``'both'``.
     outside_domain_flag : bool, optional
         Value to assign to the flag when conditions are outside the
         valid test boundary. Can be either ``True`` or ``False``.
@@ -164,13 +170,13 @@ def closure_flag(
     is_low_zenith = solar_zenith < 75
     is_high_zenith = (solar_zenith >= 75) & (solar_zenith < 93)
 
-    if check == "high-zenith":
+    if zenith_domain == "high":
         flag = is_sum_50 & is_high_zenith & (np.abs(R - 1.0) >= 0.15)
         outside_domain = np.logical_not(is_sum_50 & is_high_zenith)
-    elif check == "low-zenith":
+    elif zenith_domain == "low":
         flag = is_sum_50 & is_low_zenith & (np.abs(R - 1.0) >= 0.08)
         outside_domain = np.logical_not(is_sum_50 & is_low_zenith)
-    elif check == "both":
+    elif zenith_domain == "both":
         flag = is_sum_50 & (
             (is_low_zenith & (np.abs(R - 1.0) >= 0.08))
             | (is_high_zenith & (np.abs(R - 1.0) >= 0.15))
@@ -178,7 +184,7 @@ def closure_flag(
         outside_domain = np.logical_not(is_sum_50 & (is_low_zenith | is_high_zenith))
     else:
         raise ValueError(
-            f"check must be 'both', 'low-zenith', or 'high-zenith', got '{check}'."
+            f"zenith_domain must be 'both', 'low', or 'high', got '{zenith_domain}'."
         )
 
     if outside_domain_flag:
