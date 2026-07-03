@@ -189,7 +189,8 @@ def closure_flag(
         is_ghi_50 = (ghi > 50) | (sum_sw > 50)
     else:
         raise ValueError(
-            f"ghi_threshold_on must be 'measured', 'calculated', or 'both', got '{ghi_threshold_on}'."
+            "ghi_threshold_on must be 'measured', 'calculated', or"
+            f" 'both', got '{ghi_threshold_on}'."
         )
 
     is_low_zenith = solar_zenith < 75

@@ -105,6 +105,7 @@ def t16_quality_flags(data, altitude=0, horizon=None):
             solar_zenith=data["solar_zenith"],
             zenith_domain=zenith_domain,
             outside_domain_flag=False,
+            ghi_threshold_on="both",  # deviation from official BSRN guide
             nan_flag=False,
         )
 
@@ -114,6 +115,7 @@ def t16_quality_flags(data, altitude=0, horizon=None):
             solar_zenith=data["solar_zenith"],
             zenith_domain=zenith_domain,
             outside_domain_flag=False,
+            ghi_threshold_on="both",  # deviation from official BSRN guide
             nan_flag=False,
         )
 
