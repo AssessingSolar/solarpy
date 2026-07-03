@@ -11,7 +11,7 @@ def get_horizon_mines(
     longitude: float,
     altitude: float | None = None,
     ground_offset: float = 0,
-    url: str = 'http://toolbox.1.webservice-energy.org/service/wps',
+    url: str = "http://toolbox.1.webservice-energy.org/service/wps",
     **kwargs,
 ) -> tuple[pd.Series, dict]:
     """
@@ -55,6 +55,12 @@ def get_horizon_mines(
     >>> import solarpy
     >>> horizon, meta = solarpy.horizon.get_horizon_mines(
     ...     latitude=48.8566, longitude=2.3522, timeout=10)
+
+    Example
+    -------
+    .. marimo:: example.py
+       :height: 700px
+       :width: 100%
     """
     if altitude is None:  # API will then infer altitude
         altitude = -999
@@ -63,35 +69,43 @@ def get_horizon_mines(
     data_inputs = f"latitude={latitude};longitude={longitude};altitude={altitude};ground_offset={ground_offset}"  # noqa: E501
 
     params = {
-        'service': 'WPS',
-        'request': 'Execute',
-        'identifier': 'compute_horizon_srtm',
-        'version': '1.0.0',
+        "service": "WPS",
+        "request": "Execute",
+        "identifier": "compute_horizon_srtm",
+        "version": "1.0.0",
     }
 
     # The DataInputs parameter of the URL has to be manually formatted and
     # added to the base URL as it contains sub-parameters seperated by
     # semi-colons, which gets incorrectly formatted by the requests function
     # if passed using the params argument.
-    res = requests.get(url + '?DataInputs=' + data_inputs, params=params,
-                       **kwargs)
+    res = requests.get(url + "?DataInputs=" + data_inputs, params=params, **kwargs)
     res.raise_for_status()
 
     # The response text is first converted to a StringIO object as otherwise
     # pd.read_csv raises a ValueError stating "Protocol not known:
     # <!-- PyWPS 4.0.0 --> <wps:ExecuteResponse xmlns:gml="http"
     # Alternatively it is possible to pass the url straight to pd.read_csv
-    horizon = pd.read_csv(io.StringIO(res.text), skiprows=27, nrows=360,
-                          delimiter=';', index_col=0,
-                          names=['horizon_azimuth', 'horizon_elevation'])
-    horizon = horizon['horizon_elevation']  # convert to series
+    horizon = pd.read_csv(
+        io.StringIO(res.text),
+        skiprows=27,
+        nrows=360,
+        delimiter=";",
+        index_col=0,
+        names=["horizon_azimuth", "horizon_elevation"],
+    )
+    horizon = horizon["horizon_elevation"]  # convert to series
     # Note, there is no way to detect if the request is correct. In all cases,
     # the API always returns a status code of OK/200 and no useful error
     # message.
 
-    meta = {'data_provider': 'MINES ParisTech - Armines (France)',
-            'database': 'Shuttle Radar Topography Mission (SRTM)',
-            'latitude': latitude, 'longitude': longitude, 'altitude': altitude,
-            'ground_offset': ground_offset}
+    meta = {
+        "data_provider": "MINES ParisTech - Armines (France)",
+        "database": "Shuttle Radar Topography Mission (SRTM)",
+        "latitude": latitude,
+        "longitude": longitude,
+        "altitude": altitude,
+        "ground_offset": ground_offset,
+    }
 
     return horizon, meta
