@@ -181,7 +181,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
             has_dni = True
     if not has_dni:
         data["dni"] = ((data["ghi"] - data["dhi"]) / cos_sza).clip(lower=0)
-        data.loc[data["solar_zenith"] < 87, "dni"] = np.nan
+        data.loc[data["solar_zenith"] > 87, "dni"] = np.nan
 
     dni_extra = pvlib.irradiance.get_extra_radiation(times)
     ghi_extra = dni_extra * cos_sza
@@ -398,17 +398,17 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
             norm=TwoSlopeNorm(vmin=1, vcenter=20, vmax=175),
             **scatter_params,
         )
-        axes["mid_l"][3].set_xlabel("GHI [W/m²]")
-        axes["mid_l"][3].set_ylabel("DHI + DNI·cos(Z) - GHI [W/m²]")
-        x_limits = np.array([50, 1400])
-        axes["mid_l"][3].plot(x_limits, +0.08 * x_limits, **limit_line_params)
-        axes["mid_l"][3].plot(x_limits, -0.08 * x_limits, **limit_line_params)
-        axes["mid_l"][3].plot(
-            x_limits, +0.15 * x_limits, **{**limit_line_params, "linestyle": "-."}
-        )
-        axes["mid_l"][3].plot(
-            x_limits, -0.15 * x_limits, **{**limit_line_params, "linestyle": "-."}
-        )
+    axes["mid_l"][3].set_xlabel("GHI [W/m²]")
+    axes["mid_l"][3].set_ylabel("DHI + DNI·cos(Z) - GHI [W/m²]")
+    x_limits = np.array([50, 1400])
+    axes["mid_l"][3].plot(x_limits, +0.08 * x_limits, **limit_line_params)
+    axes["mid_l"][3].plot(x_limits, -0.08 * x_limits, **limit_line_params)
+    axes["mid_l"][3].plot(
+        x_limits, +0.15 * x_limits, **{**limit_line_params, "linestyle": "-."}
+    )
+    axes["mid_l"][3].plot(
+        x_limits, -0.15 * x_limits, **{**limit_line_params, "linestyle": "-."}
+    )
 
     # K vs. zenith
     ax = axes["mid_r"][0]
@@ -494,19 +494,19 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
             norm=TwoSlopeNorm(vmin=1, vcenter=40, vmax=250),
             **scatter_params,
         )
-        ax.plot([0, 75, 75, 93, 93], [1.08, 1.08, 1.15, 1.15, 1], **limit_line_params)
-        ax.plot([0, 75, 75, 93, 93], [0.92, 0.92, 0.85, 0.85, 1], **limit_line_params)
-        ax.set_xlabel("Solar zenith [°]")
-        ax.set_ylabel("GHI / (DHI + DNI·cos(Z)) [-]")
-        ax.text(
-            0.02,
-            0.98,
-            "GHI > 50 W/m²",
-            transform=ax.transAxes,
-            ha="left",
-            va="top",
-            alpha=0.5,
-        )
+    ax.plot([0, 75, 75, 93, 93], [1.08, 1.08, 1.15, 1.15, 1], **limit_line_params)
+    ax.plot([0, 75, 75, 93, 93], [0.92, 0.92, 0.85, 0.85, 1], **limit_line_params)
+    ax.set_xlabel("Solar zenith [°]")
+    ax.set_ylabel("GHI / (DHI + DNI·cos(Z)) [-]")
+    ax.text(
+        0.02,
+        0.98,
+        "GHI > 50 W/m²",
+        transform=ax.transAxes,
+        ha="left",
+        va="top",
+        alpha=0.5,
+    )
 
     # Maps
     if google_api_key is not None:
