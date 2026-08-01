@@ -126,7 +126,6 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         Measurement data. Required columns:
 
         - ``"ghi"`` — Global Horizontal Irradiance [W/m²]
-        - ``"dni"`` — Direct Normal Irradiance [W/m²]
         - ``"dhi"`` — Diffuse Horizontal Irradiance [W/m²]
         - ``"solar_zenith"`` — Solar zenith angle [°]
         - ``"solar_azimuth"`` — Solar azimuth angle [°]
@@ -136,6 +135,8 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
 
         Optional columns:
 
+        - ``"dni"`` — Direct Normal Irradiance [W/m²]. If not present, 
+          calculated from ``"ghi"``, ``"dhi"``, and ``"solar_zenith"``.
         - ``"ghi_clear"`` — Clearsky GHI [W/m²]; if present together with
           ``"is_clearsky"``, a clearsky-index time series panel is shown.
         - ``"is_clearsky"`` — Boolean mask for clearsky conditions; see
@@ -167,9 +168,22 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         ``"ts_scatter"``, ``"mid_l"``, ``"mid_r"``, ``"maps"``,
         ``"meta"``, ``"hist"``, ``"corr"``, ``"sun1"``, ``"sun2"``.
     """
+    # Copy dataframe to avoid modifying the original data
+    data = data.copy()
+
     # Derive variables
-    dni_extra = pvlib.irradiance.get_extra_radiation(times)
     cos_sza = np.cos(np.deg2rad(data["solar_zenith"])).clip(lower=0)
+
+    # Check if DNI column exists and has valid data
+    has_dni = False
+    if "dni" in data.columns:
+        if not data["dni"].isnull().all():
+            has_dni = True
+    if not has_dni:
+        data["dni"] = ((data["ghi"] - data["dhi"]) / cos_sza).clip(lower=0)
+        data.loc[data["solar_zenith"] < 87, "dni"] = np.nan
+
+    dni_extra = pvlib.irradiance.get_extra_radiation(times)
     ghi_extra = dni_extra * cos_sza
     ghi_calc = data["dhi"].clip(lower=0) + data["dni"].clip(lower=0) * cos_sza
 
@@ -263,25 +277,26 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     )
 
     # Closure equation ratio time series scatter plot (all conditions)
-    plot_scatter_heatmap(
-        x=mdates.date2num(times[is_ghi_above_50]),
-        y=data.loc[is_ghi_above_50, "ghi"] / ghi_calc[is_ghi_above_50],
-        ylim=(0.75, 1.25),
-        ax=axes["ts_scatter"][1],
-        ybins=200,
-        mincnt=3,
-        **ts_scatter_params,
-    )
-    axes["ts_scatter"][1].text(
-        0.02,
-        0.98,
-        "GHI > 50 W/m²",
-        ha="left",
-        va="top",
-        alpha=0.5,
-        transform=axes["ts_scatter"][1].transAxes,
-    )
-    axes["ts_scatter"][1].set_ylabel("GHI / (DHI + DNI·cos(Z)) [-]")
+    if has_dni:
+        plot_scatter_heatmap(
+            x=mdates.date2num(times[is_ghi_above_50]),
+            y=data.loc[is_ghi_above_50, "ghi"] / ghi_calc[is_ghi_above_50],
+            ylim=(0.75, 1.25),
+            ax=axes["ts_scatter"][1],
+            ybins=200,
+            mincnt=3,
+            **ts_scatter_params,
+        )
+        axes["ts_scatter"][1].text(
+            0.02,
+            0.98,
+            "GHI > 50 W/m²",
+            ha="left",
+            va="top",
+            alpha=0.5,
+            transform=axes["ts_scatter"][1].transAxes,
+        )
+        axes["ts_scatter"][1].set_ylabel("GHI / (DHI + DNI·cos(Z)) [-]")
 
     # Clearsky index time series scatter plot
     if "ghi_clear" in data.columns:
@@ -373,26 +388,27 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         ax.set_ylabel(f"{c.upper()} [W/m²]")
 
     # Closure test
-    plot_scatter_heatmap(
-        x=data.loc[is_daytime, "ghi"],
-        y=ghi_calc[is_daytime] - data.loc[is_daytime, "ghi"],
-        ax=axes["mid_l"][3],
-        xlim=(0, 1400),
-        ylim=(-200, 200),
-        norm=TwoSlopeNorm(vmin=1, vcenter=20, vmax=175),
-        **scatter_params,
-    )
-    axes["mid_l"][3].set_xlabel("GHI [W/m²]")
-    axes["mid_l"][3].set_ylabel("DHI + DNI·cos(Z) - GHI [W/m²]")
-    x_limits = np.array([50, 1400])
-    axes["mid_l"][3].plot(x_limits, +0.08 * x_limits, **limit_line_params)
-    axes["mid_l"][3].plot(x_limits, -0.08 * x_limits, **limit_line_params)
-    axes["mid_l"][3].plot(
-        x_limits, +0.15 * x_limits, **{**limit_line_params, "linestyle": "-."}
-    )
-    axes["mid_l"][3].plot(
-        x_limits, -0.15 * x_limits, **{**limit_line_params, "linestyle": "-."}
-    )
+    if has_dni:
+        plot_scatter_heatmap(
+            x=data.loc[is_daytime, "ghi"],
+            y=ghi_calc[is_daytime] - data.loc[is_daytime, "ghi"],
+            ax=axes["mid_l"][3],
+            xlim=(0, 1400),
+            ylim=(-200, 200),
+            norm=TwoSlopeNorm(vmin=1, vcenter=20, vmax=175),
+            **scatter_params,
+        )
+        axes["mid_l"][3].set_xlabel("GHI [W/m²]")
+        axes["mid_l"][3].set_ylabel("DHI + DNI·cos(Z) - GHI [W/m²]")
+        x_limits = np.array([50, 1400])
+        axes["mid_l"][3].plot(x_limits, +0.08 * x_limits, **limit_line_params)
+        axes["mid_l"][3].plot(x_limits, -0.08 * x_limits, **limit_line_params)
+        axes["mid_l"][3].plot(
+            x_limits, +0.15 * x_limits, **{**limit_line_params, "linestyle": "-."}
+        )
+        axes["mid_l"][3].plot(
+            x_limits, -0.15 * x_limits, **{**limit_line_params, "linestyle": "-."}
+        )
 
     # K vs. zenith
     ax = axes["mid_r"][0]
@@ -466,30 +482,31 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     ax.set_xlabel("Kt = GHI / TOA / cos(Z) [-]")
     ax.set_ylabel("K = DHI / GHI [-]")
 
-    # Closure test - ratio
-    ax = axes["mid_r"][3]
-    plot_scatter_heatmap(
-        x=data.loc[is_ghi_above_50, "solar_zenith"],
-        y=data.loc[is_ghi_above_50, "ghi"] / ghi_calc[is_ghi_above_50],
-        ax=ax,
-        xlim=(0, 95),
-        ylim=(0.5, 1.5),
-        norm=TwoSlopeNorm(vmin=1, vcenter=40, vmax=250),
-        **scatter_params,
-    )
-    ax.plot([0, 75, 75, 93, 93], [1.08, 1.08, 1.15, 1.15, 1], **limit_line_params)
-    ax.plot([0, 75, 75, 93, 93], [0.92, 0.92, 0.85, 0.85, 1], **limit_line_params)
-    ax.set_xlabel("Solar zenith [°]")
-    ax.set_ylabel("GHI / (DHI + DNI·cos(Z)) [-]")
-    ax.text(
-        0.02,
-        0.98,
-        "GHI > 50 W/m²",
-        transform=ax.transAxes,
-        ha="left",
-        va="top",
-        alpha=0.5,
-    )
+    if has_dni:
+        # Closure test - ratio
+        ax = axes["mid_r"][3]
+        plot_scatter_heatmap(
+            x=data.loc[is_ghi_above_50, "solar_zenith"],
+            y=data.loc[is_ghi_above_50, "ghi"] / ghi_calc[is_ghi_above_50],
+            ax=ax,
+            xlim=(0, 95),
+            ylim=(0.5, 1.5),
+            norm=TwoSlopeNorm(vmin=1, vcenter=40, vmax=250),
+            **scatter_params,
+        )
+        ax.plot([0, 75, 75, 93, 93], [1.08, 1.08, 1.15, 1.15, 1], **limit_line_params)
+        ax.plot([0, 75, 75, 93, 93], [0.92, 0.92, 0.85, 0.85, 1], **limit_line_params)
+        ax.set_xlabel("Solar zenith [°]")
+        ax.set_ylabel("GHI / (DHI + DNI·cos(Z)) [-]")
+        ax.text(
+            0.02,
+            0.98,
+            "GHI > 50 W/m²",
+            transform=ax.transAxes,
+            ha="left",
+            va="top",
+            alpha=0.5,
+        )
 
     # Maps
     if google_api_key is not None:
@@ -676,5 +693,18 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
                     axes["sun2"].get_legend().remove()
         else:
             ax.set_axis_off()
+
+    # Add message to plots if DNI was calculated from GHI and DHI
+    if not has_dni:
+        for ax in [axes["line"][1], axes["heatmap"][1], axes["mid_l"][1], axes["mid_r"][1], axes["sun2"]]:
+            ax.text(
+                0.5,
+                0.5,
+                "DNI calculated from GHI and DHI.",
+                ha="center",
+                va="center",
+                color="grey",
+                transform=ax.transAxes,
+            )
 
     return fig, axes
