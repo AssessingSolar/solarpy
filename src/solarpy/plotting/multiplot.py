@@ -324,7 +324,8 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
 
     for ax in axes["ts_scatter"]:
         ax.axhline(1, **limit_line_params, zorder=3)
-        ax.axhline([0.8, 0.9, 1.1, 1.2], c='black', alpha=0.3, zorder=-2)
+        for y in [0.8, 0.9, 1.1, 1.2]:
+            ax.axhline(y, c="black", alpha=0.3, zorder=-2)
 
     fig.align_ylabels(axes["line"] + axes["heatmap"] + axes["ts_scatter"])
 
