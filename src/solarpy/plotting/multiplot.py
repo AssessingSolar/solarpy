@@ -287,16 +287,17 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
             mincnt=3,
             **ts_scatter_params,
         )
-        axes["ts_scatter"][1].text(
-            0.02,
-            0.98,
-            "GHI > 50 W/m²",
-            ha="left",
-            va="top",
-            alpha=0.5,
-            transform=axes["ts_scatter"][1].transAxes,
-        )
-        axes["ts_scatter"][1].set_ylabel("GHI / (DHI + DNI·cos(Z)) [-]")
+    axes["ts_scatter"][1].text(
+        0.02,
+        0.98,
+        "GHI > 50 W/m²",
+        ha="left",
+        va="top",
+        alpha=0.5,
+        transform=axes["ts_scatter"][1].transAxes,
+    )
+    axes["ts_scatter"][1].set_ylabel("GHI / (DHI + DNI·cos(Z)) [-]")
+    axes["ts_scatter"][1].set_ylim(0.75, 1.25)
 
     # Clearsky index time series scatter plot
     if "ghi_clear" in data.columns:
@@ -309,16 +310,16 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
             mincnt=1,
             **ts_scatter_params,
         )
-        axes["ts_scatter"][2].set_ylabel("Kc = GHI / GHIclear [-]")
-        axes["ts_scatter"][2].text(
-            0.02,
-            0.98,
-            "Clearsky index based on the McClear model.",
-            ha="left",
-            va="top",
-            alpha=0.75,
-            transform=axes["ts_scatter"][2].transAxes,
-        )
+    axes["ts_scatter"][2].set_ylabel("Kc = GHI / GHIclear [-]")
+    axes["ts_scatter"][2].text(
+        0.02,
+        0.98,
+        "Clearsky index based on the McClear model.",
+        ha="left",
+        va="top",
+        alpha=0.75,
+        transform=axes["ts_scatter"][2].transAxes,
+    )
 
     for ax in axes["ts_scatter"]:
         ax.axhline(1, **limit_line_params)
@@ -409,6 +410,8 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     axes["mid_l"][3].plot(
         x_limits, -0.15 * x_limits, **{**limit_line_params, "linestyle": "-."}
     )
+    axes["mid_l"][3].set_xlim(0, 1400)
+    axes["mid_l"][3].set_ylim(-200, 200)
 
     # K vs. zenith
     ax = axes["mid_r"][0]
@@ -484,29 +487,30 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
 
     if has_dni:
         # Closure test - ratio
-        ax = axes["mid_r"][3]
         plot_scatter_heatmap(
             x=data.loc[is_ghi_above_50, "solar_zenith"],
             y=data.loc[is_ghi_above_50, "ghi"] / ghi_calc[is_ghi_above_50],
-            ax=ax,
+            ax=axes["mid_r"][3],
             xlim=(0, 95),
             ylim=(0.5, 1.5),
             norm=TwoSlopeNorm(vmin=1, vcenter=40, vmax=250),
             **scatter_params,
         )
-    ax.plot([0, 75, 75, 93, 93], [1.08, 1.08, 1.15, 1.15, 1], **limit_line_params)
-    ax.plot([0, 75, 75, 93, 93], [0.92, 0.92, 0.85, 0.85, 1], **limit_line_params)
-    ax.set_xlabel("Solar zenith [°]")
-    ax.set_ylabel("GHI / (DHI + DNI·cos(Z)) [-]")
-    ax.text(
+    axes["mid_r"][3].plot([0, 75, 75, 93, 93], [1.08, 1.08, 1.15, 1.15, 1], **limit_line_params)
+    axes["mid_r"][3].plot([0, 75, 75, 93, 93], [0.92, 0.92, 0.85, 0.85, 1], **limit_line_params)
+    axes["mid_r"][3].set_xlabel("Solar zenith [°]")
+    axes["mid_r"][3].set_ylabel("GHI / (DHI + DNI·cos(Z)) [-]")
+    axes["mid_r"][3].text(
         0.02,
         0.98,
         "GHI > 50 W/m²",
-        transform=ax.transAxes,
+        transform=axes["mid_r"][3].transAxes,
         ha="left",
         va="top",
         alpha=0.5,
     )
+    axes["mid_r"][3].set_xlim(0, 95)
+    axes["mid_r"][3].set_ylim(0.5, 1.5)
 
     # Maps
     if google_api_key is not None:
@@ -546,6 +550,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         )
 
     # Metadata text
+    text_kwargs = dict(family="monospace", va="top", ha="left", transform=axes["meta"].transAxes)
     meta_text = {
         "Name": meta.get("name", "N/A"),
         "Country": meta.get("country", "N/A"),
@@ -561,9 +566,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
             0.02,
             0.98 - ii * 0.18,
             f"{k}: {v}",
-            va="top",
-            ha="left",
-            transform=axes["meta"].transAxes,
+            **text_kwargs
         )
     axes["meta"].axis("off")
 
@@ -574,17 +577,8 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         f"Period: {min_date.strftime('%Y-%m-%d')} to "
         f"{max_date.strftime('%Y-%m-%d')}  (days: {days})"
     )
-    axes["meta"].text(
-        0.4, 0.98, period_text, va="top", ha="left", transform=axes["meta"].transAxes
-    )
-    axes["meta"].text(
-        0.4,
-        0.62,
-        "Annual equivalent sums ↓",
-        va="top",
-        ha="left",
-        transform=axes["meta"].transAxes,
-    )
+    axes["meta"].text(0.4, 0.98, period_text, **text_kwargs)
+    axes["meta"].text(0.4, 0.62, "Annual equivalent sums ↓",**text_kwargs)
     for ii, c in enumerate(components):
         s = (
             f"{np.nansum(data[c]) * dt_hours / 1000:>4.0f} kWh/m² "
@@ -594,10 +588,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
             0.4,
             0.44 - ii * 0.18,
             f"{c.upper()}: {s}",
-            family="monospace",
-            va="top",
-            ha="left",
-            transform=axes["meta"].transAxes,
+            **text_kwargs
         )
 
     # Histograms
@@ -629,7 +620,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     axes["hist"][0].set_xlabel("Kt = GHI / TOA / cos(Z) [-]")
     axes["hist"][1].set_xlabel("Kn = DNI / TOA [-]")
     axes["hist"][2].set_xlabel("Kd = DHI / TOA / cos(Z) [-]")
-    axes["hist"][0].set_ylabel("count (> 5 W/m²)")
+    axes["hist"][0].set_ylabel("Count (> 5 W/m²)")
     hist_max_ylim = max([axes["hist"][i].get_ylim()[1] for i in range(3)])
     for ax in axes["hist"]:
         ax.spines[["top", "right"]].set_visible(False)
@@ -699,11 +690,11 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         for ax in [axes["line"][1], axes["heatmap"][1], axes["mid_l"][1], axes["mid_r"][1], axes["sun2"]]:
             ax.text(
                 0.5,
-                0.5,
+                0.97,
                 "DNI calculated from GHI and DHI.",
                 ha="center",
-                va="center",
-                color="grey",
+                va="top",
+                color="black",
                 transform=ax.transAxes,
             )
 
