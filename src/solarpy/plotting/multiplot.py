@@ -181,7 +181,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
             has_dni = True
     if not has_dni:
         data["dni"] = ((data["ghi"] - data["dhi"]) / cos_sza).clip(lower=0)
-        data.loc[data["solar_zenith"] > 87, "dni"] = np.nan
+        data.loc[data["solar_zenith"] > 88, "dni"] = np.nan
 
     dni_extra = pvlib.irradiance.get_extra_radiation(times)
     ghi_extra = dni_extra * cos_sza
@@ -689,10 +689,10 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     if not has_dni:
         for ax in [axes["line"][1], axes["heatmap"][1], axes["mid_l"][1], axes["mid_r"][1], axes["sun2"]]:
             ax.text(
-                0.5,
                 0.97,
-                "DNI calculated from GHI and DHI.",
-                ha="center",
+                0.97,
+                "DNI calculated\nfrom GHI and DHI.",
+                ha="right",
                 va="top",
                 color="black",
                 transform=ax.transAxes,
