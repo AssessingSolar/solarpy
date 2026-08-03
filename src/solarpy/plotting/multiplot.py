@@ -254,6 +254,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         s=1,
         cmap=two_part_colormap(),
         norm=TwoSlopeNorm(vmin=1, vcenter=20, vmax=120),
+        zorder=2,
     )
     # Diffuse fraction (K) time series scatter plot (overcast conditions)
     plot_scatter_heatmap(
@@ -322,7 +323,8 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     )
 
     for ax in axes["ts_scatter"]:
-        ax.axhline(1, **limit_line_params)
+        ax.axhline(1, **limit_line_params, zorder=3)
+        ax.axhline([0.8, 0.9, 1.1, 1.2], c='black', alpha=0.3, zorder=-2)
 
     fig.align_ylabels(axes["line"] + axes["heatmap"] + axes["ts_scatter"])
 
