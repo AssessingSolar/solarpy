@@ -254,17 +254,19 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         s=1,
         cmap=two_part_colormap(),
         norm=TwoSlopeNorm(vmin=1, vcenter=20, vmax=120),
+        zorder=2,
     )
     # Diffuse fraction (K) time series scatter plot (overcast conditions)
     plot_scatter_heatmap(
         x=mdates.date2num(times[is_overcast]),
         y=K[is_overcast],
-        ylim=(0.75, 1.25),
+        ylim=(0.7, 1.3),
         ax=axes["ts_scatter"][0],
         ybins=200,
         mincnt=1,
         **ts_scatter_params,
     )
+    axes["ts_scatter"][0].set_ylim(0.8, 1.2)
     axes["ts_scatter"][0].set_ylabel("K = DHI / GHI [-]")
     axes["ts_scatter"][0].text(
         0.02,
@@ -281,12 +283,14 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         plot_scatter_heatmap(
             x=mdates.date2num(times[is_ghi_above_50]),
             y=data.loc[is_ghi_above_50, "ghi"] / ghi_calc[is_ghi_above_50],
-            ylim=(0.75, 1.25),
+            ylim=(0.7, 1.3),
             ax=axes["ts_scatter"][1],
             ybins=200,
             mincnt=3,
             **ts_scatter_params,
         )
+    axes["ts_scatter"][1].set_ylim(0.8, 1.2)
+    axes["ts_scatter"][1].set_ylabel("GHI / (DHI + DNI·cos(Z)) [-]")
     axes["ts_scatter"][1].text(
         0.02,
         0.98,
@@ -296,20 +300,19 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         alpha=0.5,
         transform=axes["ts_scatter"][1].transAxes,
     )
-    axes["ts_scatter"][1].set_ylabel("GHI / (DHI + DNI·cos(Z)) [-]")
-    axes["ts_scatter"][1].set_ylim(0.75, 1.25)
 
     # Clearsky index time series scatter plot
     if "ghi_clear" in data.columns:
         plot_scatter_heatmap(
             x=mdates.date2num(times),
             y=data["ghi"] / data["ghi_clear"],
-            ylim=(0.75, 1.25),
+            ylim=(0.7, 1.3),
             ax=axes["ts_scatter"][2],
             ybins=200,
             mincnt=1,
             **ts_scatter_params,
         )
+    axes["ts_scatter"][2].set_ylim(0.75, 1.25)
     axes["ts_scatter"][2].set_ylabel("Kc = GHI / GHIclear [-]")
     axes["ts_scatter"][2].text(
         0.02,
@@ -320,10 +323,13 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         alpha=0.75,
         transform=axes["ts_scatter"][2].transAxes,
     )
+    axes["ts_scatter"]
 
     for ax in axes["ts_scatter"]:
-        ax.axhline(1, **limit_line_params)
-
+        ax.axhline(1, **limit_line_params, zorder=3)
+        for y in [0.8, 0.9, 1.1, 1.2]:
+            ax.axhline(y, c='black', alpha=0.2, lw=0.5, zorder=-2)
+            
     fig.align_ylabels(axes["line"] + axes["heatmap"] + axes["ts_scatter"])
 
     # Set xticks and xlimits
