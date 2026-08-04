@@ -222,7 +222,8 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         yticks = [-8, 0, 500, 1000, 1500]
         ax.set_yticks(_piecewise_transform(yticks))
         ax.set_yticklabels(yticks)
-        for yline in [-6, -4, -2, 0]:
+        ax.axhline(_piecewise_transform(0), c='black', linestyle='-', lw=0.5)
+        for yline in [-6, -4, -2]:
             ax.axhline(_piecewise_transform(yline), c='black', linestyle='--',
                        alpha=0.5, lw=0.5)
 
