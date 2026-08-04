@@ -216,11 +216,14 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         # ax.plot(data[c].resample("5min").max(), lw=0.5)
         # ax.set_ylabel(f"{c.upper()} [W/m²]")
         # ax.set_ylim(0, None)
-        ax.plot(piecewise_transform(data[c].resample("5min").max()), lw=0.5)
+        ax.plot(_piecewise_transform(data[c].resample("5min").max()), lw=0.5)
         ax.set_ylabel(f"{c.upper()} [W/m²]")
-        ax.set_ylim(piecewise_transform([-8, 1500]))
-        for ytick in [-6, -4, -2, 0]:
-            ax.axhline(piecewise_transform(ytick), c='black', linestyle='--',
+        ax.set_ylim(_piecewise_transform([-8, 1500]))
+        yticks = [-8, 0, 500, 1000, 1500]
+        ax.set_yticks(_piecewise_transform(yticks))
+        ax.set_yticklabels(yticks)
+        for yline in [-6, -4, -2, 0]:
+            ax.axhline(_piecewise_transform(yline), c='black', linestyle='--',
                        alpha=0.5, lw=0.5)
 
     # Determine sunrise and sunset
@@ -713,7 +716,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     return fig, axes
 
 
-def piecewise_transform(y, lower=-8, center=0, upper=1500, center_frac=0.25):
+def _piecewise_transform(y, lower=-8, center=0, upper=1500, center_frac=0.25):
     """
     Piecewise linear transform.
 
