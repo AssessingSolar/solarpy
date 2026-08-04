@@ -213,9 +213,15 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     # TODO: remove pandas dependency
     # resampling to speed up the process
     for ax, c in zip(axes["line"], components):
-        ax.plot(data[c].resample("5min").max(), lw=0.5)
+        # ax.plot(data[c].resample("5min").max(), lw=0.5)
+        # ax.set_ylabel(f"{c.upper()} [W/m²]")
+        # ax.set_ylim(0, None)
+        ax.plot(piecewise_transform(data[c].resample("5min").max()), lw=0.5)
         ax.set_ylabel(f"{c.upper()} [W/m²]")
-        ax.set_ylim(0, None)
+        ax.set_ylim(piecewise_transform([-8, 1500]))
+        for ytick in [-6, -4, -2, 0]:
+            ax.axhline(piecewise_transform(ytick), c='black', linestyle='--',
+                       alpha=0.5, lw=0.5)
 
     # Determine sunrise and sunset
     sun_rise_set = pvlib.solarposition.sun_rise_set_transit_spa(
@@ -705,3 +711,53 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
             )
 
     return fig, axes
+
+
+def piecewise_transform(y, lower=-8, center=0, upper=1500, center_frac=0.25):
+    """
+    Piecewise linear transform.
+
+    Parameters
+    ----------
+    y : array-like
+        Values to transform.
+    lower : float, default=-8
+        Minimum value.
+    center : float, default=0
+        Breakpoint between the two linear regions.
+    upper : float, default=1500
+        Maximum value.
+    center_frac : float, default=0.25
+        Fraction of the transformed axis occupied by the interval
+        ``[lower, center]``. The interval ``[center, upper]`` occupies the
+        remaining ``1 - center_frac`` of the axis.
+
+    Returns
+    -------
+    ndarray
+        Transformed values mapped to the interval ``[0, 1]``.
+    """
+    is_series = isinstance(y, pd.Series)
+
+    values = np.asarray(y, dtype=float)
+    out = np.empty_like(values)
+
+    lower_mask = values <= center
+    out[lower_mask] = (
+        (values[lower_mask] - lower)
+        / (center - lower)
+        * center_frac
+    )
+
+    upper_mask = ~lower_mask
+    out[upper_mask] = (
+        center_frac
+        + (values[upper_mask] - center)
+        / (upper - center)
+        * (1 - center_frac)
+    )
+
+    if is_series:
+        return pd.Series(out, index=y.index, name=y.name)
+
+    return out
