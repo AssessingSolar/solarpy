@@ -175,11 +175,10 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     cos_sza = np.cos(np.deg2rad(data["solar_zenith"])).clip(lower=0)
 
     # Check if DNI column exists and has valid data
-    has_dni = False
-    if "dni" in data.columns:
-        if not data["dni"].isnull().all():
-            has_dni = True
-    if not has_dni:
+    if ("dni" in data.columns) and not data["dni"].isnull().all():
+        has_dni = True
+    else:  # calculate DNI if missing or all nans
+        has_dni = False
         data["dni"] = ((data["ghi"] - data["dhi"]) / cos_sza).clip(lower=0)
         data.loc[data["solar_zenith"] > 88, "dni"] = np.nan
 
