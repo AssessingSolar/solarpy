@@ -693,7 +693,8 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
 
     # Add message to plots if DNI was calculated from GHI and DHI
     if not has_dni:
-        for ax in [axes["line"][1], axes["heatmap"][1], axes["mid_l"][1], axes["mid_r"][1], axes["sun2"]]:
+        for ax in [axes["line"][1], axes["heatmap"][1], axes["mid_l"][1], axes["mid_r"][1],
+                   axes["sun2"]]:
             ax.text(
                 0.97,
                 0.97,
@@ -703,5 +704,14 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
                 color="black",
                 transform=ax.transAxes,
             )
-
+        for ax in [axes["ts_scatter"][1], axes["mid_l"][3], axes["mid_r"][3]]:
+            ax.text(
+                0.5,
+                0.5,
+                "DNI not available.",
+                ha="center",
+                va="bottom",
+                color="black",
+                transform=ax.transAxes,
+            )
     return fig, axes
