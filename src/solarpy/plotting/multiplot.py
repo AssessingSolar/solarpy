@@ -514,6 +514,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         va="top",
         alpha=0.5,
     )
+    axes["mid_r"][3].set_xticks([0, 15, 30, 45, 60, 75, 90])
     axes["mid_r"][3].set_xlim(0, 95)
     axes["mid_r"][3].set_ylim(0.5, 1.5)
 
