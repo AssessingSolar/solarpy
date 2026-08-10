@@ -236,7 +236,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
             norm=norm,
         )
     ax.text(0.02, 0.95, c.upper(), va="top", ha="left", transform=ax.transAxes)
-    if not sun_rise_set["sunrise"].isna().all() or not sun_rise_set["sunset"].isna().all():
+    if not sun_rise_set["sunrise"].isna().all() and not sun_rise_set["sunset"].isna().all():
         sunrise = (
             sun_rise_set["sunrise"] - sun_rise_set["sunrise"].index.normalize()
         ).dt.total_seconds() / 3600 + utc_offset_longitude
