@@ -219,7 +219,8 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     # Determine sunrise and sunset
     sun_rise_set = pvlib.solarposition.sun_rise_set_transit_spa(
         pd.date_range(times.min(), periods=days, freq="1d"),
-        meta["latitude"],
+        # ensure it works for locations near the poles
+        max(min(meta["latitude"], 89.8), -89.8),
         meta["longitude"],
     )
     sunrise = (
