@@ -220,15 +220,9 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     sun_rise_set = pvlib.solarposition.sun_rise_set_transit_spa(
         pd.date_range(times.min(), periods=days, freq="1d"),
         # ensure it works for locations near the poles
-        max(min(meta["latitude"], 89.8), -89.8),
+        meta["latitude"],
         meta["longitude"],
     )
-    sunrise = (
-        sun_rise_set["sunrise"] - sun_rise_set["sunrise"].index.normalize()
-    ).dt.total_seconds() / 3600 + utc_offset_longitude
-    sunset = (
-        sun_rise_set["sunset"] - sun_rise_set["sunset"].index.normalize()
-    ).dt.total_seconds() / 3600 + utc_offset_longitude
 
     # Intraday heat map plots
     cmap, norm = irradiance_colormap_and_norm(vmax=1000)
@@ -241,9 +235,16 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
             cmap=cmap,
             norm=norm,
         )
+    ax.text(0.02, 0.95, c.upper(), va="top", ha="left", transform=ax.transAxes)
+    if not sun_rise_set["sunrise"].isna().all() or not sun_rise_set["sunset"].isna().all():
+        sunrise = (
+            sun_rise_set["sunrise"] - sun_rise_set["sunrise"].index.normalize()
+        ).dt.total_seconds() / 3600 + utc_offset_longitude
+        sunset = (
+            sun_rise_set["sunset"] - sun_rise_set["sunset"].index.normalize()
+        ).dt.total_seconds() / 3600 + utc_offset_longitude
         ax.plot(sunrise, **limit_line_params)
         ax.plot(sunset, **limit_line_params)
-        ax.text(0.02, 0.95, c.upper(), va="top", ha="left", transform=ax.transAxes)
 
     ts_scatter_params = dict(
         xlim=mdates.date2num(ts_xlim),
