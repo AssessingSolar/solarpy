@@ -236,15 +236,15 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         )
         ax.text(0.02, 0.95, c.upper(), va="top", ha="left",
                 transform=ax.transAxes)
-    if not sun_rise_set["sunrise"].isna().all() and not sun_rise_set["sunset"].isna().all():
-        sunrise = (
-            sun_rise_set["sunrise"] - sun_rise_set["sunrise"].index.normalize()
-        ).dt.total_seconds() / 3600 + utc_offset_longitude
-        sunset = (
-            sun_rise_set["sunset"] - sun_rise_set["sunset"].index.normalize()
-        ).dt.total_seconds() / 3600 + utc_offset_longitude
-        ax.plot(sunrise, **limit_line_params)
-        ax.plot(sunset, **limit_line_params)
+        if not sun_rise_set["sunrise"].isna().all() and not sun_rise_set["sunset"].isna().all():
+            sunrise = (
+                sun_rise_set["sunrise"] - sun_rise_set["sunrise"].index.normalize()
+            ).dt.total_seconds() / 3600 + utc_offset_longitude
+            sunset = (
+                sun_rise_set["sunset"] - sun_rise_set["sunset"].index.normalize()
+            ).dt.total_seconds() / 3600 + utc_offset_longitude
+            ax.plot(sunrise, **limit_line_params)
+            ax.plot(sunset, **limit_line_params)
 
     ts_scatter_params = dict(
         xlim=mdates.date2num(ts_xlim),
