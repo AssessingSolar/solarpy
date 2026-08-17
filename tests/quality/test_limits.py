@@ -48,6 +48,11 @@ def test_bsrn_limit_zenith_90_upper_is_c():
     assert upper == 100.0
 
 
+def test_bsrn_limit_zenith_nighttime():
+    _, upper = bsrn_limits(95.0, DNI_EXTRA, "ghi-ppl")
+    assert np.isna(upper)
+
+
 def test_bsrn_limit_custom_dict():
     lower, upper = bsrn_limits(SZA, DNI_EXTRA,
                                {"scale": 1.0, "exponent": 1.0, "offset": 99, "lower": -99})
