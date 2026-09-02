@@ -248,6 +248,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
 
     ts_scatter_params = dict(
         xlim=mdates.date2num(ts_xlim),
+        ylim=(0.7, 1.3),
         xbins=days,
         plot_type="scatter",
         sort_points=True,
@@ -256,14 +257,13 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         cmap=two_part_colormap(),
         norm=TwoSlopeNorm(vmin=1, vcenter=20, vmax=120),
         zorder=2,
+        ybins=200,
     )
     # Diffuse fraction (K) time series scatter plot (overcast conditions)
     plot_scatter_heatmap(
         x=mdates.date2num(times[is_overcast]),
         y=K[is_overcast],
-        ylim=(0.7, 1.3),
         ax=axes["ts_scatter"][0],
-        ybins=200,
         mincnt=1,
         **ts_scatter_params,
     )
@@ -284,9 +284,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         plot_scatter_heatmap(
             x=mdates.date2num(times[is_ghi_above_50]),
             y=data.loc[is_ghi_above_50, "ghi"] / ghi_calc[is_ghi_above_50],
-            ylim=(0.7, 1.3),
             ax=axes["ts_scatter"][1],
-            ybins=200,
             mincnt=3,
             **ts_scatter_params,
         )
@@ -307,9 +305,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         plot_scatter_heatmap(
             x=mdates.date2num(times),
             y=data["ghi"] / data["ghi_clear"],
-            ylim=(0.7, 1.3),
             ax=axes["ts_scatter"][2],
-            ybins=200,
             mincnt=1,
             **ts_scatter_params,
         )
