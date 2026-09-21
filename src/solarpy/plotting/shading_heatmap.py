@@ -15,6 +15,7 @@ def plot_shading_heatmap(
     value: Any,
     solar_azimuth: Any,
     solar_elevation: Any,
+    min_solar_elevation: float = 0.2,
     azimuth_bin_size: float = 1.0,
     elevation_bin_size: float = 1.0,
     encoding: Callable[[np.ndarray], float] | str = "max",
@@ -47,6 +48,9 @@ def plot_shading_heatmap(
     solar_elevation : array-like of float
         Solar elevation angle in degrees (0–90 above the horizon). Must
         be the same length as *value*.
+    min_solar_elevation : array-like of float
+        Minimum solar elevation angle in degrees for which to use data
+        for. Default is ``0.2``.
     azimuth_bin_size : float, optional
         Width of each azimuth bin in degrees. Default is ``1.0``.
     elevation_bin_size : float, optional
@@ -127,7 +131,7 @@ def plot_shading_heatmap(
     solar_elevation = np.asarray(solar_elevation, dtype=float)
 
     # Discard sub-horizon data and non-finite values (nan and inf)
-    above_and_finite = (solar_elevation >= 0) & np.isfinite(value)
+    above_and_finite = (solar_elevation >= min_solar_elevation) & np.isfinite(value)
     value = value[above_and_finite]
     solar_azimuth = solar_azimuth[above_and_finite]
     solar_elevation = solar_elevation[above_and_finite]
