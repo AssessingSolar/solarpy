@@ -214,7 +214,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     for ax, c in zip(axes["line"], components):
         ax.plot(data[c].resample("5min").max(), lw=0.5)
         ax.set_ylabel(f"{c.upper()} [W/m²]")
-        ax.set_ylim(0, None)
+        ax.set_ylim(0, 1500)
 
     # Determine sunrise and sunset
     sun_rise_set = pvlib.solarposition.sun_rise_set_transit_spa(
