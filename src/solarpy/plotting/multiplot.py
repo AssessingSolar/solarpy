@@ -135,7 +135,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
 
         Optional columns:
 
-        - ``"dni"`` — Direct Normal Irradiance [W/m²]. If not present, 
+        - ``"dni"`` — Direct Normal Irradiance [W/m²]. If not present,
           calculated from ``"ghi"``, ``"dhi"``, and ``"solar_zenith"``.
         - ``"ghi_clear"`` — Clearsky GHI [W/m²]; if present together with
           ``"is_clearsky"``, a clearsky-index time series panel is shown.
@@ -234,9 +234,11 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
             cmap=cmap,
             norm=norm,
         )
-        ax.text(0.02, 0.95, c.upper(), va="top", ha="left",
-                transform=ax.transAxes)
-        if not sun_rise_set["sunrise"].isna().all() and not sun_rise_set["sunset"].isna().all():
+        ax.text(0.02, 0.95, c.upper(), va="top", ha="left", transform=ax.transAxes)
+        if (
+            not sun_rise_set["sunrise"].isna().all()
+            and not sun_rise_set["sunset"].isna().all()
+        ):
             sunrise = (
                 sun_rise_set["sunrise"] - sun_rise_set["sunrise"].index.normalize()
             ).dt.total_seconds() / 3600 + utc_offset_longitude
@@ -325,8 +327,8 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
     for ax in axes["ts_scatter"]:
         ax.axhline(1, **limit_line_params, zorder=3)
         for y in [0.8, 0.9, 1.1, 1.2]:
-            ax.axhline(y, c='black', alpha=0.2, lw=0.5, zorder=-2)
-            
+            ax.axhline(y, c="black", alpha=0.2, lw=0.5, zorder=-2)
+
     fig.align_ylabels(axes["line"] + axes["heatmap"] + axes["ts_scatter"])
 
     # Set xticks and xlimits
@@ -499,8 +501,12 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
             norm=TwoSlopeNorm(vmin=1, vcenter=40, vmax=250),
             **scatter_params,
         )
-    axes["mid_r"][3].plot([0, 75, 75, 93, 93], [1.08, 1.08, 1.15, 1.15, 1], **limit_line_params)
-    axes["mid_r"][3].plot([0, 75, 75, 93, 93], [0.92, 0.92, 0.85, 0.85, 1], **limit_line_params)
+    axes["mid_r"][3].plot(
+        [0, 75, 75, 93, 93], [1.08, 1.08, 1.15, 1.15, 1], **limit_line_params
+    )
+    axes["mid_r"][3].plot(
+        [0, 75, 75, 93, 93], [0.92, 0.92, 0.85, 0.85, 1], **limit_line_params
+    )
     axes["mid_r"][3].set_xlabel("Solar zenith [°]")
     axes["mid_r"][3].set_ylabel("GHI / (DHI + DNI·cos(Z)) [-]")
     axes["mid_r"][3].text(
@@ -554,7 +560,9 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         )
 
     # Metadata text
-    text_kwargs = dict(family="monospace", va="top", ha="left", transform=axes["meta"].transAxes)
+    text_kwargs = dict(
+        family="monospace", va="top", ha="left", transform=axes["meta"].transAxes
+    )
     meta_text = {
         "Name": meta.get("name", "N/A"),
         "Country": meta.get("country", "N/A"),
@@ -566,12 +574,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         "Climate (KG)": meta.get("climate", "N/A"),
     }
     for ii, (k, v) in enumerate(meta_text.items()):
-        axes["meta"].text(
-            0.02,
-            0.98 - ii * 0.18,
-            f"{k}: {v}",
-            **text_kwargs
-        )
+        axes["meta"].text(0.02, 0.98 - ii * 0.18, f"{k}: {v}", **text_kwargs)
     axes["meta"].axis("off")
 
     # Statistics text
@@ -582,18 +585,13 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
         f"{max_date.strftime('%Y-%m-%d')}  (days: {days})"
     )
     axes["meta"].text(0.4, 0.98, period_text, **text_kwargs)
-    axes["meta"].text(0.4, 0.62, "Annual equivalent sums ↓",**text_kwargs)
+    axes["meta"].text(0.4, 0.62, "Annual equivalent sums ↓", **text_kwargs)
     for ii, c in enumerate(components):
         s = (
             f"{np.nansum(data[c]) * dt_hours / 1000:>4.0f} kWh/m² "
             f"({np.mean(np.isnan(data[c]))*100:1.1f}% missing)"
         )
-        axes["meta"].text(
-            0.4,
-            0.44 - ii * 0.18,
-            f"{c.upper()}: {s}",
-            **text_kwargs
-        )
+        axes["meta"].text(0.4, 0.44 - ii * 0.18, f"{c.upper()}: {s}", **text_kwargs)
 
     # Histograms
     threshold = 5
@@ -680,9 +678,9 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
                 northern_hemisphere=meta["latitude"] > 0,
                 horizon=horizon,
             )
-            # remove xtick of the top figure if the bottom figure is plotted
+            # remove xticklabels of the top figure if the bottom figure is plotted
             if ii == 1:
-                axes["sun1"].set_xticks([])
+                axes["sun1"].set_xticklabels(None)
                 axes["sun1"].set_xlabel(None)
                 if horizon is not None:
                     axes["sun2"].get_legend().remove()
@@ -691,7 +689,13 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
 
     # Add message to plots if DNI was calculated from GHI and DHI
     if not has_dni:
-        for ax in [axes["line"][1], axes["heatmap"][1], axes["mid_l"][1], axes["mid_r"][1], axes["sun2"]]:
+        for ax in [
+            axes["line"][1],
+            axes["heatmap"][1],
+            axes["mid_l"][1],
+            axes["mid_r"][1],
+            axes["sun2"],
+        ]:
             ax.text(
                 0.97,
                 0.97,

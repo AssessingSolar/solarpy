@@ -198,12 +198,16 @@ def plot_shading_heatmap(
     _az_compass = {0: "N", 90: "E", 180: "S", 270: "W", 360: "N"}
     if northern_hemisphere:
         az_ticks = np.arange(0, 360 + 1, 90)
+        az_ticks_minor = np.arange(0, 360 + 1, 15)
         ax.set_xticks(az_ticks)
+        ax.set_xticks(az_ticks_minor, minor=True)
         ax.set_xticklabels([_az_compass[x] for x in az_ticks])
         ax.set_xlim(0, 360)
     else:
         az_ticks = np.arange(-180, 180 + 1, 90)
+        az_ticks_minor = np.arange(-180, 180 + 1, 15)
         ax.set_xticks(az_ticks)
+        ax.set_xticks(az_ticks_minor, minor=True)
         ax.set_xticklabels(_az_compass.get(int(x % 360)) for x in az_ticks)
         ax.set_xlim(-180, 180)
     ax.set_xlabel("Solar azimuth [°]")
