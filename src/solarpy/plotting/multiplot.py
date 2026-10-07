@@ -680,7 +680,7 @@ def multiplot(times, data, meta, horizon=None, google_api_key=None, figsize=(24,
             )
             # remove xticklabels of the top figure if the bottom figure is plotted
             if ii == 1:
-                axes["sun1"].set_xticklabels(None)
+                axes["sun1"].tick_params(axis="x", labelbottom=False)
                 axes["sun1"].set_xlabel(None)
                 if horizon is not None:
                     axes["sun2"].get_legend().remove()
